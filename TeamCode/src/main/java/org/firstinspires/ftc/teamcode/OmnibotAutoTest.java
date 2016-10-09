@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
+import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
@@ -34,10 +35,12 @@ public class OmnibotAutoTest extends OpMode {
     DcMotor backLeft;
     DcMotor backRight;
     GyroSensor gyro;
+    float robotBearing;
     Long time, startTime, startTime2;
     VuforiaLocalizer vuforia;
     List<VuforiaTrackable> allTrackables;
     double posx, posy, posz;
+    float mmFTCFieldWidth;
 
     public static final String TAG = "Vuforia Sample";
 
@@ -67,26 +70,26 @@ public class OmnibotAutoTest extends OpMode {
         this.vuforia = ClassFactory.createVuforiaLocalizer(parameters);
 
         VuforiaTrackables targets = this.vuforia.loadTrackablesFromAsset("FTC_2016-17");
-        VuforiaTrackable redTarget = targets.get(0);
-        redTarget.setName("Wheels");
+        VuforiaTrackable blueWheels = targets.get(0);
+        blueWheels.setName("Wheels");
 
-        VuforiaTrackable blueTarget  = targets.get(1);
-        blueTarget.setName("Tools");
+        VuforiaTrackable redTools  = targets.get(1);
+        redTools.setName("Tools");
 
-        VuforiaTrackable greenTarget = targets.get(2);
-        greenTarget.setName("Legos");
+        VuforiaTrackable blueLegos = targets.get(2);
+        blueLegos.setName("Legos");
 
-        VuforiaTrackable yellowTarget  = targets.get(3);
-        yellowTarget.setName("Gears");
+        VuforiaTrackable redGears  = targets.get(3);
+        redGears.setName("Gears");
 
         allTrackables = new ArrayList<VuforiaTrackable>();
         allTrackables.addAll(targets);
 
         float mmPerInch        = 25.4f;
         float mmBotWidth       = (float)16.5 * mmPerInch;            // ... or whatever is right for your robot
-        float mmFTCFieldWidth  = (12*12 - 2) * mmPerInch;   // the FTC field is ~11'10" center-to-center of the glass panels
+        mmFTCFieldWidth  = (12*12 - 2) * mmPerInch;   // the FTC field is ~11'10" center-to-center of the glass panels
 
-        OpenGLMatrix redTargetLocationOnField = OpenGLMatrix
+        OpenGLMatrix blueWheelsLocationOnField = OpenGLMatrix
                     /* Then we translate the target off to the RED WALL. Our translation here
                     is a negative translation in X.*/
                 .translation(-mmFTCFieldWidth/2, 0, 0)
@@ -94,10 +97,10 @@ public class OmnibotAutoTest extends OpMode {
                             /* First, in the fixed (field) coordinate system, we rotate 90deg in X, then 90 in Z */
                         AxesReference.EXTRINSIC, AxesOrder.XZX,
                         AngleUnit.DEGREES, 90, 90, 0));
-        redTarget.setLocation(redTargetLocationOnField);
-        RobotLog.ii(TAG, "Wheels=%s", format(redTargetLocationOnField));
+        blueWheels.setLocation(blueWheelsLocationOnField);
+        RobotLog.ii(TAG, "Wheels=%s", format(blueWheelsLocationOnField));
 
-        OpenGLMatrix blueTargetLocationOnField = OpenGLMatrix
+        OpenGLMatrix redToolsLocationOnField = OpenGLMatrix
                 /* Then we translate the target off to the Blue Audience wall.
                 Our translation here is a positive translation in Y.*/
                 .translation(mmFTCFieldWidth/2 - (float)863.6, mmFTCFieldWidth/2, 0)
@@ -105,10 +108,10 @@ public class OmnibotAutoTest extends OpMode {
                         /* First, in the fixed (field) coordinate system, we rotate 90deg in X */
                         AxesReference.EXTRINSIC, AxesOrder.XZX,
                         AngleUnit.DEGREES, 90, 0, 0));
-        blueTarget.setLocation(blueTargetLocationOnField);
-        RobotLog.ii(TAG, "Tools=%s", format(blueTargetLocationOnField));
+        redTools.setLocation(redToolsLocationOnField);
+        RobotLog.ii(TAG, "Tools=%s", format(redToolsLocationOnField));
 
-        OpenGLMatrix greenTargetLocationOnField = OpenGLMatrix
+        OpenGLMatrix blueLegosLocationOnField = OpenGLMatrix
                     /* Then we translate the target off to the RED WALL. Our translation here
                     is a negative translation in X.*/
                 .translation(-mmFTCFieldWidth/2, 0, 0)
@@ -116,10 +119,10 @@ public class OmnibotAutoTest extends OpMode {
                             /* First, in the fixed (field) coordinate system, we rotate 90deg in X, then 90 in Z */
                         AxesReference.EXTRINSIC, AxesOrder.XZX,
                         AngleUnit.DEGREES, 90, 90, 0));
-        greenTarget.setLocation(greenTargetLocationOnField);
-        RobotLog.ii(TAG, "Legos=%s", format(greenTargetLocationOnField));
+        blueLegos.setLocation(blueLegosLocationOnField);
+        RobotLog.ii(TAG, "Legos=%s", format(blueLegosLocationOnField));
 
-        OpenGLMatrix yellowTargetLocationOnField = OpenGLMatrix
+        OpenGLMatrix redGearsLocationOnField = OpenGLMatrix
                 /* Then we translate the target off to the Blue Audience wall.
                 Our translation here is a positive translation in Y.*/
                 .translation(mmFTCFieldWidth/2 - (float)2082.8, mmFTCFieldWidth/2, 0)
@@ -127,8 +130,8 @@ public class OmnibotAutoTest extends OpMode {
                         /* First, in the fixed (field) coordinate system, we rotate 90deg in X */
                         AxesReference.EXTRINSIC, AxesOrder.XZX,
                         AngleUnit.DEGREES, 90, 0, 0));
-        yellowTarget.setLocation(yellowTargetLocationOnField);
-        RobotLog.ii(TAG, "Gears=%s", format(yellowTargetLocationOnField));
+        redGears.setLocation(redGearsLocationOnField);
+        RobotLog.ii(TAG, "Gears=%s", format(redGearsLocationOnField));
 
         OpenGLMatrix phoneLocationOnRobot = OpenGLMatrix
                 .translation(mmBotWidth/2,(float)44.45,200)
@@ -137,10 +140,10 @@ public class OmnibotAutoTest extends OpMode {
                         AngleUnit.DEGREES, -90, 0, 0));
         RobotLog.ii(TAG, "phone=%s", format(phoneLocationOnRobot));
 
-        ((VuforiaTrackableDefaultListener)redTarget.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
-        ((VuforiaTrackableDefaultListener)blueTarget.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
-        ((VuforiaTrackableDefaultListener)greenTarget.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
-        ((VuforiaTrackableDefaultListener)yellowTarget.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
+        ((VuforiaTrackableDefaultListener)blueWheels.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
+        ((VuforiaTrackableDefaultListener)redTools.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
+        ((VuforiaTrackableDefaultListener)blueLegos.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
+        ((VuforiaTrackableDefaultListener)redGears.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
 
         targets.activate();
     }
@@ -175,7 +178,7 @@ public class OmnibotAutoTest extends OpMode {
                 break;
             }
             case 1: {
-                if (navigate(0, .5))
+                if (navigate(0, .5, 1000))
                     control = 3;
                 break;
             }
@@ -198,32 +201,49 @@ public class OmnibotAutoTest extends OpMode {
         telemetry.addData("Distance from target", trueHeading - target);
 
         if (lastLocation != null) {
+            VectorF trans = lastLocation.getTranslation();
+            Orientation rot = Orientation.getOrientation(lastLocation, AxesReference.EXTRINSIC, AxesOrder.XYZ, AngleUnit.RADIANS);
+            posx = trans.get(0);
+            posy = trans.get(1);
+
+            robotBearing = rot.thirdAngle;
+
             //  RobotLog.vv(TAG, "robot=%s", format(lastLocation));
+            String outputData = format(lastLocation);
+
+            /*outputData = outputData.substring(outputData.lastIndexOf("{") + 1, outputData.lastIndexOf("}"));
+            posx = Double.parseDouble(outputData.substring(0, outputData.indexOf(" ")));
+            outputData = outputData.substring(outputData.indexOf(" ") + 1);
+            posy = Double.parseDouble(outputData.substring(0, outputData.indexOf(" ")));
+            outputData = outputData.substring(outputData.indexOf(" ") + 1);
+            posz = Double.parseDouble(outputData);*/
+            telemetry.addData("posx", posx);
+            telemetry.addData("posy", posy);
+            //telemetry.addData("posz", posz);
+
             telemetry.addData("Pos", format(lastLocation));
         } else {
             telemetry.addData("Pos", "Unknown");
         }
-        posx = lastLocation.getData()[0];
-        posy = lastLocation.getData()[1];
-        posz = lastLocation.getData()[2];
 
         previousHeading = gyro.getHeading();
     }
 
-    public boolean navigate(int deg, double power) //like unit circle, 90 forwards, 270 backwards
+    public boolean navigate(int deg, double power, double distance) //like unit circle, 90 forwards, 270 backwards
     {
-        boolean isFound = false;
-        if (isFound == false)
-        {
-            double x = Math.cos(deg + 0.0), y = Math.sin(deg + 0.0);
+        double x = Math.cos(deg + 0.0), y = Math.sin(deg + 0.0);
 
+
+
+        /*if ()
+        {
             frontLeft.setPower((-(-y - x)/2) * power);
             backLeft.setPower(((-y + x)/2) * power);
             frontRight.setPower(((y - x)/2) * power);
             backRight.setPower((-(y + x)/2) * power);
 
             return false;
-        }
+        }*/
         return true;
     }
 

@@ -99,6 +99,11 @@ public class ConceptVuforiaNavigation extends LinearOpMode {
     VuforiaLocalizer vuforia;
 
     @Override public void runOpMode() throws InterruptedException {
+
+        float posx;
+        float posy;
+        float posz;
+
         /**
          * Start up Vuforia, telling it the id of the view that we wish to use as the parent for
          * the camera monitor feedback; if no camera monitor feedback is desired, use the parameterless
@@ -314,6 +319,7 @@ public class ConceptVuforiaNavigation extends LinearOpMode {
              */
             if (lastLocation != null) {
                 //  RobotLog.vv(TAG, "robot=%s", format(lastLocation));
+
                 telemetry.addData("Pos", format(lastLocation));
             } else {
                 telemetry.addData("Pos", "Unknown");
