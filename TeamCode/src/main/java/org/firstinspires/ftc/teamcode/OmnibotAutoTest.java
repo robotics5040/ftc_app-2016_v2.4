@@ -29,7 +29,7 @@ import java.util.List;
 //change
 @Autonomous(name = "Omnibot Autonomous Testing", group = "Testing")
 public class OmnibotAutoTest extends OpMode {
-    int control = 0, degrees = 0, previousHeading = 0, heading, trueHeading, target, start;
+    int control = 1, degrees = 0, previousHeading = 0, heading, trueHeading, target, start, startDegrees;
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
@@ -39,7 +39,7 @@ public class OmnibotAutoTest extends OpMode {
     Long time, startTime, startTime2;
     VuforiaLocalizer vuforia;
     List<VuforiaTrackable> allTrackables;
-    double posx, posy, posz;
+    double posx, posy, posz, startx, starty;
     float mmFTCFieldWidth;
 
     public static final String TAG = "Vuforia Sample";
@@ -171,18 +171,35 @@ public class OmnibotAutoTest extends OpMode {
 
         switch (control) {
             case 0: {
-                if (time > startTime + 20000)
+                if (time > startTime + 10000)
                     control = 1;
                 break;
             }
             case 1: {
-                if (navigate(0, .5, 1000))
-                    control = 3;
+                if (rotate('l', -90)) {
+                    startTime2 = time;
+                    allStop();
+                    control = 2;
+                }
                 break;
             }
             case 2: {
-                if (rotate('r', 90))
+                if (time > startTime2 + 2000) {
+                    startx = posx;
+                    starty = posy;
+                    startDegrees = trueHeading;
                     control = 3;
+                }
+                break;
+            }
+            case 3: {
+                if (navigate(90, .25, 500))
+                    control = 4;
+                break;
+            }
+            case 4: {
+                if (rotate('r', 90))
+                    control = 5;
                 break;
             }
             default: {
@@ -228,25 +245,21 @@ public class OmnibotAutoTest extends OpMode {
     }
 
     public boolean navigate(int deg, double power, double distance) //like unit circle, 90 forwards, 270 backwards
-    {//                          0            .5            1000
-        // xpos = ~-400 ypos ~-1000
-
-        double x = Math.cos(deg), y = Math.sin(deg);
-        //              1                  0
-        double targetx = distance * x + posx;
-        //       600
-        double targety = distance * y + posy;
-        //        -1000
-        if (targetx >= posx || targety >= posy)
-        {//   600      -400    -1000     -1000
-            frontLeft.setPower((-(-y - x)/2) * power);
-            backLeft.setPower(((-y + x)/2) * power);
-            frontRight.setPower(((y - x)/2) * power);
-            backRight.setPower((-(y + x)/2) * power);
+    {
+        double x = Math.cos(deg * (Math.PI/180.0)), y = Math.sin(deg * (Math.PI/180.0));
+        double targetx = distance * x + startx;
+        double targety = distance * y + starty;
+        if (targetx <= posx || targety >= posy)
+        {
+            double correction = correct();
+            frontLeft.setPower((-(-y - x)/2) * power + correction);
+            backLeft.setPower(((-y + x)/2) * power + correction);
+            frontRight.setPower(((y - x)/2) * power + correction);
+            backRight.setPower((-(y + x)/2) * power + correction);
 
             return false;
         }
-        return false;
+        return true;
     }
 
     public boolean rotate(char direction, int deg)
@@ -254,18 +267,18 @@ public class OmnibotAutoTest extends OpMode {
         target = deg;
         if (direction == 'r' && trueHeading - target < 0)
         {
-            frontRight.setPower(-.25);
-            frontLeft.setPower(-.25);
-            backRight.setPower(-.25);
-            backLeft.setPower(-.25);
+            frontRight.setPower(-.15);
+            frontLeft.setPower(-.15);
+            backRight.setPower(-.15);
+            backLeft.setPower(-.15);
             return false;
         }
         else if (direction == 'l' && trueHeading - target > 0)
         {
-            frontRight.setPower(.25);
-            frontLeft.setPower(.25);
-            backRight.setPower(.25);
-            backLeft.setPower(.25);
+            frontRight.setPower(.15);
+            frontLeft.setPower(.15);
+            backRight.setPower(.15);
+            backLeft.setPower(.15);
             return false;
         }
         return true;
@@ -289,5 +302,14 @@ public class OmnibotAutoTest extends OpMode {
 
     String format(OpenGLMatrix transformationMatrix) {
         return transformationMatrix.formatAsTransform();
+    }
+
+    public double correct()
+    {
+        if (trueHeading > startDegrees + 3)
+            return .1;
+        if (trueHeading < startDegrees - 3)
+            return -.1;
+        return 0;
     }
 }
