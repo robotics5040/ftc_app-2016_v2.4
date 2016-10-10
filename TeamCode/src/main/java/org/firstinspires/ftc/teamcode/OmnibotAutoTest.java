@@ -29,7 +29,7 @@ import java.util.List;
 
 @Autonomous(name = "Omnibot Autonomous Testing", group = "Testing")
 public class OmnibotAutoTest extends OpMode {
-    int control = 1, degrees = 0, previousHeading = 0, heading, trueHeading, target, start;
+    int control = 0, degrees = 0, previousHeading = 0, heading, trueHeading, target, start;
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
@@ -171,10 +171,8 @@ public class OmnibotAutoTest extends OpMode {
 
         switch (control) {
             case 0: {
-                if (rotate('l', -90)) {
+                if (time > startTime + 20000)
                     control = 1;
-                    startTime2 = System.currentTimeMillis();
-                }
                 break;
             }
             case 1: {
@@ -230,21 +228,25 @@ public class OmnibotAutoTest extends OpMode {
     }
 
     public boolean navigate(int deg, double power, double distance) //like unit circle, 90 forwards, 270 backwards
-    {
-        double x = Math.cos(deg + 0.0), y = Math.sin(deg + 0.0);
+    {//                          0            .5            1000
+        // xpos = ~-400 ypos ~-1000
 
-
-
-        /*if ()
-        {
+        double x = Math.cos(deg), y = Math.sin(deg);
+        //              1                  0
+        double targetx = distance * x + posx;
+        //       600
+        double targety = distance * y + posy;
+        //        -1000
+        if (targetx >= posx || targety >= posy)
+        {//   600      -400    -1000     -1000
             frontLeft.setPower((-(-y - x)/2) * power);
             backLeft.setPower(((-y + x)/2) * power);
             frontRight.setPower(((y - x)/2) * power);
             backRight.setPower((-(y + x)/2) * power);
 
             return false;
-        }*/
-        return true;
+        }
+        return false;
     }
 
     public boolean rotate(char direction, int deg)
