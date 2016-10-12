@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -67,8 +68,14 @@ public class Auto1 extends OpMode {
 
         VuforiaTrackables targets = this.vuforia.loadTrackablesFromAsset("FTC_2016-17");
 
+        VuforiaTrackable redWheels  = targets.get(0); //load gears
+        redWheels.setName("Wheels");
+
         VuforiaTrackable redTools  = targets.get(1); //load tools
         redTools.setName("Tools");
+
+        VuforiaTrackable redLegos  = targets.get(2); //load gears
+        redLegos.setName("Legos");
 
         VuforiaTrackable redGears  = targets.get(3); //load gears
         redGears.setName("Gears");
@@ -77,8 +84,8 @@ public class Auto1 extends OpMode {
         allTrackables.addAll(targets);
 
         float mmPerInch        = 25.4f;
-        float mmBotWidth       = (float)16.5 * mmPerInch;            // ... or whatever is right for your robot
-        mmFTCFieldWidth  = (12*12 - 2) * mmPerInch;   // the FTC field is ~11'10" center-to-center of the glass panels
+        float mmBotWidth       = (float)16.5 * mmPerInch;
+        mmFTCFieldWidth  = (12*12 - 2) * mmPerInch;
 
         OpenGLMatrix redToolsLocationOnField = OpenGLMatrix //set up tracking for tools
                 .translation(mmFTCFieldWidth/2 - (float)863.6, mmFTCFieldWidth/2, 0)
@@ -111,14 +118,14 @@ public class Auto1 extends OpMode {
 
     public void loop()
     {
-        for (VuforiaTrackable trackable : allTrackables) {
+        /*for (VuforiaTrackable trackable : allTrackables) {
             telemetry.addData(trackable.getName(), ((VuforiaTrackableDefaultListener) trackable.getListener()).isVisible() ? "Visible" : "Not Visible");    //
 
             OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener) trackable.getListener()).getUpdatedRobotLocation();
             if (robotLocationTransform != null) {
                 lastLocation = robotLocationTransform;
             }
-        }
+        }*/
 
         time = System.currentTimeMillis();
 
@@ -131,29 +138,53 @@ public class Auto1 extends OpMode {
             case 0: {//Set up for initial delay
                 segmentTime = time;
                 control = 1;
+                telemetry.addData("Status", "Setting up start delay...");
+                break;
             }
             case 1: {//Initial delay, set control to 2 to skip delay
                 if (segmentTime + 10000 < time)
                     control = 2;
+                telemetry.addData("Status", "Waiting to start...");
                 break;
             }
-            case 2: {//setup statement
-
+            case 2: {//setup for first move
+                segmentTime = time;
+                control = 3;
+                telemetry.addData("Status", "Preparing to move...");
+                break;
             }
             case 3: {//move into position to shoot (timed move)
-
+                if (navigateTime(90, .3, 500))
+                    control = 4;
+                telemetry.addData("Status", "Moving for .5 seconds...");
+                break;
             }
-            case 4: {//start shooting
-
+            case 4: {//setup for shooting
+                allStop();
+                segmentTime = time;
+                control = 5;
+                telemetry.addData("Status", "Preparing to shoot...");
+                break;
             }
-            case 5: {//delay while shooting
-
+            case 5: {//shoot
+                shoot();
+                if (segmentTime + 2000 < time)
+                    control = 6;
+                telemetry.addData("Status", "Shooting for 2 seconds...");
+                break;
             }
             case 6: {//setup for turn
-
+                allStop();
+                segmentTime = time;
+                control = 7;
+                telemetry.addData("Status", "Preparing to turn...");
+                break;
             }
             case 7: {//turn 90 degrees left
-
+                if (rotate('l', -90))
+                    control = 8;
+                telemetry.addData("Status", "Turning 90 degrees left...");
+                break;
             }
             case 8: {//setup for move
 
@@ -278,6 +309,7 @@ public class Auto1 extends OpMode {
         frontRight.setPower(0);
         backLeft.setPower(0);
         backRight.setPower(0);
+        //will add all motors when they are added
     }
 
     String format(OpenGLMatrix transformationMatrix) {
@@ -296,5 +328,15 @@ public class Auto1 extends OpMode {
     public boolean shoot() //Waiting for launcher to be built, no code implemented
     {
         return true;
+    }
+
+    public void scan(VuforiaTrackable t) //for t, use allTrackables.get(). 0 is Wheels, 1 is Tools, 2 is Legos, 3 is Gears
+    {
+        telemetry.addData(t.getName(), ((VuforiaTrackableDefaultListener) t.getListener()).isVisible() ? "Visible" : "Not Visible");    //
+
+        OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener) t.getListener()).getUpdatedRobotLocation();
+        if (robotLocationTransform != null) {
+            lastLocation = robotLocationTransform;
+        }
     }
 }
