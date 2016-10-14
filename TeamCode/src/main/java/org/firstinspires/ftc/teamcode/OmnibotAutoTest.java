@@ -29,7 +29,7 @@ import java.util.List;
 //change
 @Autonomous(name = "Omnibot Autonomous Testing", group = "Testing")
 public class OmnibotAutoTest extends OpMode {
-    int control = 1, degrees = 0, previousHeading = 0, heading, trueHeading, target, start, startDegrees;
+    int control = 20, degrees = 0, previousHeading = 0, heading, trueHeading, target, start, startDegrees;
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;

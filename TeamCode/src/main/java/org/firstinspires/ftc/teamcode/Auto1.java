@@ -21,13 +21,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * Created by bense on 10/11/2016.
  */
 @Autonomous (name = "Red 1", group = "Red Autonomous")
 public class Auto1 extends OpMode {
-    int control = 2, degrees = 0, previousHeading = 0, heading, trueHeading, target, startDegrees;
+    int control = 2, degrees = 0, previousHeading = 0, heading, trueHeading, target, startDegrees, targetDegrees;
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
@@ -37,7 +38,7 @@ public class Auto1 extends OpMode {
     Long time, startTime, segmentTime;
     VuforiaLocalizer vuforia;
     List<VuforiaTrackable> allTrackables;
-    double posx, posy, startx, starty;
+    double posx, posy, startx, starty, targetDistance;
     float mmFTCFieldWidth;
 
     public static final String TAG = "Vuforia Sample";
@@ -154,9 +155,9 @@ public class Auto1 extends OpMode {
                 break;
             }
             case 3: {//move into position to shoot (timed move)
-                if (navigateTime(90, .3, 500))
+                if (navigateTime(90, .5, 1000))
                     control = 4;
-                telemetry.addData("Status", "Moving for .5 seconds...");
+                telemetry.addData("Status", "Moving for 1 seconds...");
                 break;
             }
             case 4: {//setup for shooting
@@ -181,25 +182,58 @@ public class Auto1 extends OpMode {
                 break;
             }
             case 7: {//turn 90 degrees left
-                if (rotate('l', -90))
+                if (rotate('l', -80))
                     control = 8;
                 telemetry.addData("Status", "Turning 90 degrees left...");
                 break;
             }
             case 8: {//setup for move
-
+                allStop();
+                startDegrees -= 90;
+                control = 9;
+                telemetry.addData("Status", "Mreparing to move...");
+                break;
             }
             case 9: {//move until target is visible
-
+                navigate(135, .35);
+                scan(allTrackables.get(3));
+                if (((VuforiaTrackableDefaultListener) allTrackables.get(3).getListener()).isVisible())
+                    control = 10;
+                telemetry.addData("Status", "Moving to find beacon...");
+                break;
             }
             case 10: {//setup for lineup
+                allStop();
+                scan(allTrackables.get(3));
 
+                //Target x: -515     Target y: 1475
+                double targetx = posx - -515;
+                double targety = posy - 1475;
+
+                targetDegrees = (int) ((180 / Math.PI) * (Math.acos(targetx / targety)));
+                targetDistance = Math.sqrt(Math.pow(Math.abs(targetx), 2) + Math.pow(Math.abs(targety), 2));
+                control = 11;
+                telemetry.addData("targetx", targetx);
+                telemetry.addData("targety", targety);
+                telemetry.addData("Status", "Beacon found! Calculating next position...");
+                break;
             }
             case 11: {//attempt to lineup
-
+                if (navigate(targetDegrees, .35, targetDistance))
+                    control = 12;
+                telemetry.addData("distance", targetDistance);
+                telemetry.addData("degrees", targetDegrees);
+                telemetry.addData("Status", "Lining up...");
+                break;
             }
             case 12: {//check lineup, return to 10 if failed
-
+                allStop();
+                if ((-515 - 30 < posx && -515 + 30 > posx) && (1475 - 30 < posx && 1475 + 30 > posy))
+                    control = 13;
+                else
+                    control = 10;
+                telemetry.addData("Status", "Checking lineup...");
+                break;
             }
             case 13: {//move to beacon
 
@@ -215,7 +249,7 @@ public class Auto1 extends OpMode {
             }
         }
 
-        telemetry.addData("Timer", time - startTime);
+        telemetry.addData("Timer", time - segmentTime);
         telemetry.addData("Control", control);
         telemetry.addData("Heading", trueHeading);
 
@@ -271,6 +305,17 @@ public class Auto1 extends OpMode {
             return false;
         }
         return true;
+    }
+
+    public void navigate(int deg, double power)
+    {
+        double x = Math.cos(deg * (Math.PI/180.0)), y = Math.sin(deg * (Math.PI/180.0));
+
+        double correction = correct();
+        frontLeft.setPower((-(-y - x)/2) * power + correction);
+        backLeft.setPower(((-y + x)/2) * power + correction);
+        frontRight.setPower(((y - x)/2) * power + correction);
+        backRight.setPower((-(y + x)/2) * power + correction);
     }
 
     public boolean rotate(char direction, int deg)
