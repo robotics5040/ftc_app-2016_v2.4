@@ -1,9 +1,13 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.hitechnic.HiTechnicNxtColorSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.GyroSensor;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -28,7 +32,7 @@ import java.util.NoSuchElementException;
  */
 @Autonomous (name = "Red 1", group = "Red Autonomous")
 public class Auto1 extends OpMode {
-    int control = 2, degrees = 0, previousHeading = 0, heading, trueHeading, target, startDegrees, targetDegrees;
+    int control = 12, degrees = 0, previousHeading = 0, heading, trueHeading, target, startDegrees, targetDegrees;
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
@@ -40,6 +44,9 @@ public class Auto1 extends OpMode {
     List<VuforiaTrackable> allTrackables;
     double posx, posy, startx, starty, targetDistance;
     float mmFTCFieldWidth;
+    ColorSensor color;
+    UltrasonicSensor sonar;
+    Servo pusher;
 
     public static final String TAG = "Vuforia Sample";
 
@@ -51,6 +58,11 @@ public class Auto1 extends OpMode {
         backLeft = hardwareMap.dcMotor.get("backLeft");
         backRight = hardwareMap.dcMotor.get("backRight");
         gyro = hardwareMap.gyroSensor.get("gyro");
+        sonar = hardwareMap.ultrasonicSensor.get("sonar");
+        color = hardwareMap.colorSensor.get("color");
+        pusher = hardwareMap.servo.get("pusher");
+        pusher.setPosition(1);
+
         gyro.calibrate();
 
         frontLeft.setDirection(DcMotor.Direction.FORWARD);
@@ -191,18 +203,26 @@ public class Auto1 extends OpMode {
                 allStop();
                 startDegrees -= 90;
                 control = 9;
-                telemetry.addData("Status", "Mreparing to move...");
+                telemetry.addData("Status", "Preparing to move...");
                 break;
             }
             case 9: {//move until target is visible
-                navigate(135, .35);
+                navigateBlind(135, .35);
                 scan(allTrackables.get(3));
-                if (((VuforiaTrackableDefaultListener) allTrackables.get(3).getListener()).isVisible())
+                if (((VuforiaTrackableDefaultListener) allTrackables.get(3).getListener()).isVisible()) {
                     control = 10;
+                    segmentTime = time;
+                }
                 telemetry.addData("Status", "Moving to find beacon...");
                 break;
             }
-            case 10: {//setup for lineup
+            case 10: {//Wait for robot to completely
+                allStop();
+                if (segmentTime + 1000 < time)
+                    control = 11;
+                break;
+            }
+            case 11: {//setup for lineup
                 allStop();
                 scan(allTrackables.get(3));
 
@@ -214,37 +234,55 @@ public class Auto1 extends OpMode {
 
                 targetDegrees = (int) ((180 / Math.PI) * (Math.acos(targetx / targety)));
                 targetDistance = Math.sqrt(Math.pow(Math.abs(targetx), 2) + Math.pow(Math.abs(targety), 2));
-                control = 11;
+                control = 12;
                 telemetry.addData("targetx", targetx);
                 telemetry.addData("targety", targety);
                 telemetry.addData("Status", "Beacon found! Calculating next position...");
                 break;
             }
-            case 11: {//attempt to lineup
-                if (navigate(targetDegrees, .35, targetDistance))
-                    control = 12;
+            case 12: {//attempt to lineup
+                navigateBlind(targetDegrees, 0);
+                if (sonar.getUltrasonicLevel() <= 10)
+                    control = 14;
+                telemetry.addData("Sonar", sonar.getUltrasonicLevel());
                 telemetry.addData("distance", targetDistance);
                 telemetry.addData("degrees", targetDegrees);
                 telemetry.addData("Status", "Lining up...");
                 break;
             }
-            case 12: {//check lineup, return to 10 if failed
+            case 13: {//check lineup, return to 10 if failed
                 allStop();
                 if ((-515 - 30 < posx && -515 + 30 > posx) && (1475 - 30 < posx && 1475 + 30 > posy))
-                    control = 13;
+                    control = 14;
                 else
-                    control = 10;
+                    control = 11;
                 telemetry.addData("Status", "Checking lineup...");
                 break;
             }
-            case 13: {//move to beacon
-
-            }
             case 14: {//check beacon
-
+                allStop();
+                if (color.blue() > 50)
+                    pusher.setPosition(1);
+                else
+                    pusher.setPosition(0);
+                control = 14;
+                telemetry.addData("red", color.red());
+                telemetry.addData("green", color.green());
+                telemetry.addData("blue", color.blue());
+                segmentTime = time;
+                break;
             }
-            case 15: {//press a button
-
+            case 15: {
+                if (segmentTime + 1000 < time) {
+                    control = 16;
+                    segmentTime = time;
+                }
+                break;
+            }
+            case 16: {//press a button
+                if (navigateTime(90, .5, 250))
+                    control = 17;
+                break;
             }
             default: {
                 allStop();
@@ -277,15 +315,13 @@ public class Auto1 extends OpMode {
     public boolean navigate(int deg, double power, double distance) //like unit circle, 90 forwards, 270 backwards
     {
         double x = Math.cos(deg * (Math.PI/180.0)), y = Math.sin(deg * (Math.PI/180.0));
-        //             ~0                                   ~90
         double targetx = distance * x + startx;
-        //         -523
         double targety = distance * y + starty;
-        //         1386
+
         telemetry.addData("target x", targetx);
         telemetry.addData("target y", targety);
+
         if (targetx + startx <= posx || targety + starty >= posy)
-        //             -523               988
         {
             double correction = correct(); //Course correction
             frontLeft.setPower((-(-y - x)/2) * power + correction);
@@ -315,7 +351,7 @@ public class Auto1 extends OpMode {
         return true;
     }
 
-    public void navigate(int deg, double power)
+    public void navigateBlind(int deg, double power)
     {
         double x = Math.cos(deg * (Math.PI/180.0)), y = Math.sin(deg * (Math.PI/180.0));
 
