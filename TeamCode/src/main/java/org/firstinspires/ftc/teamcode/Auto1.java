@@ -209,6 +209,8 @@ public class Auto1 extends OpMode {
                 //Target x: -515     Target y: 1475
                 double targetx = posx - -515;
                 double targety = posy - 1475;
+                startx = posx;
+                starty = posy;
 
                 targetDegrees = (int) ((180 / Math.PI) * (Math.acos(targetx / targety)));
                 targetDistance = Math.sqrt(Math.pow(Math.abs(targetx), 2) + Math.pow(Math.abs(targety), 2));
@@ -275,11 +277,17 @@ public class Auto1 extends OpMode {
     public boolean navigate(int deg, double power, double distance) //like unit circle, 90 forwards, 270 backwards
     {
         double x = Math.cos(deg * (Math.PI/180.0)), y = Math.sin(deg * (Math.PI/180.0));
+        //             ~0                                   ~90
         double targetx = distance * x + startx;
+        //         -523
         double targety = distance * y + starty;
-        if (targetx <= posx || targety >= posy)
+        //         1386
+        telemetry.addData("target x", targetx);
+        telemetry.addData("target y", targety);
+        if (targetx + startx <= posx || targety + starty >= posy)
+        //             -523               988
         {
-            double correction = correct();
+            double correction = correct(); //Course correction
             frontLeft.setPower((-(-y - x)/2) * power + correction);
             backLeft.setPower(((-y + x)/2) * power + correction);
             frontRight.setPower(((y - x)/2) * power + correction);
