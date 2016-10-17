@@ -92,7 +92,7 @@ public class OmnibotAutoTest extends OpMode {
         OpenGLMatrix blueWheelsLocationOnField = OpenGLMatrix
                     /* Then we translate the target off to the RED WALL. Our translation here
                     is a negative translation in X.*/
-                .translation(-mmFTCFieldWidth/2, 0, 0)
+                .translation(-mmFTCFieldWidth/2, mmFTCFieldWidth/2 - (float)2082.8, 0)
                 .multiplied(Orientation.getRotationMatrix(
                             /* First, in the fixed (field) coordinate system, we rotate 90deg in X, then 90 in Z */
                         AxesReference.EXTRINSIC, AxesOrder.XZX,
@@ -114,7 +114,7 @@ public class OmnibotAutoTest extends OpMode {
         OpenGLMatrix blueLegosLocationOnField = OpenGLMatrix
                     /* Then we translate the target off to the RED WALL. Our translation here
                     is a negative translation in X.*/
-                .translation(-mmFTCFieldWidth/2, 0, 0)
+                .translation(-mmFTCFieldWidth/2, mmFTCFieldWidth/2 - (float)863.6, 0)
                 .multiplied(Orientation.getRotationMatrix(
                             /* First, in the fixed (field) coordinate system, we rotate 90deg in X, then 90 in Z */
                         AxesReference.EXTRINSIC, AxesOrder.XZX,
