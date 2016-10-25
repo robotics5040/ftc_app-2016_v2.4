@@ -2,8 +2,11 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.GyroSensor;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -38,6 +41,9 @@ public class Auto2 extends OpMode {
     List<VuforiaTrackable> allTrackables;
     double posx, posy, startx, starty, targetDistance;
     float mmFTCFieldWidth;
+    ColorSensor color;
+    UltrasonicSensor sonar;
+    Servo pusher;
 
     public static final String TAG = "Vuforia Sample";
 
@@ -193,56 +199,198 @@ public class Auto2 extends OpMode {
                 break;
             }
             case 9: {//move until target is visible
-                navigate(45, .35);
+                navigate(45, .25);
                 scan(allTrackables.get(0));
                 if (((VuforiaTrackableDefaultListener) allTrackables.get(0).getListener()).isVisible())
                     control = 10;
+                    segmentTime = time;
                 telemetry.addData("Status", "Moving to find beacon...");
                 break;
             }
-            case 10: {//setup for lineup
+            case 10: {//Wait for robot to completely stop
                 allStop();
-                scan(allTrackables.get(3));
+                if (segmentTime + 1000 < time)
+                    control = 11;
+                break;
+
+            }
+            case 11: {//setup for lineup                                                            //coord of wheels
+                allStop();
+                scan(allTrackables.get(0));
 
                 //Target x: -515     Target y: 1475
-                double targetx = posx - -515;
-                double targety = posy - 1475;
+                double targetx = posx - 1512;
+                double targety = posy - -50;
+                startx = posx;
+                starty = posy;
 
-                targetDegrees = (int) ((180 / Math.PI) * (Math.acos(targetx / targety)));
-                targetDistance = Math.sqrt(Math.pow(Math.abs(targetx), 2) + Math.pow(Math.abs(targety), 2));
-                control = 11;
-                telemetry.addData("targetx", targetx);
-                telemetry.addData("targety", targety);
+                targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.acos(targetx / targety)));
+                //targetDistance = Math.sqrt(Math.pow(Math.abs(targetx), 2) + Math.pow(Math.abs(targety), 2));
+                control = 12;
+                //telemetry.addData("targetx", targetx);
+                //telemetry.addData("targety", targety);
                 telemetry.addData("Status", "Beacon found! Calculating next position...");
                 break;
             }
-            case 11: {//attempt to lineup
-                if (navigate(targetDegrees, .35, targetDistance))
-                    control = 12;
-                telemetry.addData("distance", targetDistance);
+            case 12: {//attempt to lineup
+                scan(allTrackables.get(0));
+                navigateBlind(targetDegrees, .25);
+                if (sonar.getUltrasonicLevel() <= 15)
+                    control = 14;
+                if (segmentTime + 250 < time)
+                    control = 13;
+                telemetry.addData("Sonar", sonar.getUltrasonicLevel());
+                //telemetry.addData("distance", targetDistance);
                 telemetry.addData("degrees", targetDegrees);
                 telemetry.addData("Status", "Lining up...");
                 break;
             }
-            case 12: {//check lineup, return to 10 if failed
-                allStop();
-                if ((-515 - 30 < posx && -515 + 30 > posx) && (1475 - 30 < posx && 1475 + 30 > posy))
-                    control = 13;
-                else
-                    control = 10;
+            case 13: {////check lineup, adjust if veering away from target
+                scan(allTrackables.get(0));
+                double targetx = posx - 512;                                                       //fix coordinates
+                double targety = posy - -50;
+
+                targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.acos(targetx / targety)));
                 telemetry.addData("Status", "Checking lineup...");
+                control = 12;
+                segmentTime = time;
                 break;
             }
-            case 13: {//move to beacon
-
-            }
             case 14: {//check beacon
-
+                allStop();
+                if (color.blue() > 200)
+                    pusher.setPosition(1);
+                else
+                    pusher.setPosition(0);
+                control = 15;
+                segmentTime = time;
+                break;
             }
-            case 15: {//press a button
-
+            case 15: {//Give time for servo to move
+                allStop();
+                if (segmentTime + 1000 < time) {
+                    control = 16;
+                    segmentTime = time;
+                }
+                break;
             }
-            default: {
+            case 16: {//press a button
+                if (navigateTime(90, .5, 500))
+                    control = 17;
+                break;
+            }
+            case 17: {//Move backwards until 50mm away from beacon
+                navigateBlind(270, .35);
+                if (sonar.getUltrasonicLevel() >= 50) {
+                    control = 18;
+                    segmentTime = time;
+                }
+                break;
+            }
+            case 18: {//Delay before next move
+                allStop();
+                if (segmentTime + 500 < time) {
+                    segmentTime = time;
+                    control = 19;
+                }
+                break;
+            }
+            case 19: {//Move until beacon is detected (Delay in detection to clear first beacon)
+                navigateBlind(180, .5);
+                if (segmentTime + 2000 <= time && sonar.getUltrasonicLevel() < 70 && sonar.getUltrasonicLevel() != -1) {
+                    control = 20;
+                    segmentTime = time;
+                }
+                break;
+            }
+            case 20: {//Stop to allow detection of picture, if picture is not found, go to alternate code
+                allStop();
+                scan(allTrackables.get(2));
+                if (segmentTime + 500 < time) {
+                    if (((VuforiaTrackableDefaultListener) allTrackables.get(2).getListener()).isVisible())
+                        control = 21;
+                    else {
+                        control = 24;
+                        segmentTime = time;
+                    }
+                }
+                break;
+            }
+            case 21: {//Calculate initial movement angle                                            //coords of legos
+                scan(allTrackables.get(2));
+                double targetx = posx - 1512; //Position of beacon
+                double targety = posy - 1172;
+                startx = posx;
+                starty = posy;
+
+                targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.acos(targetx / targety)));
+                control = 22;
+                segmentTime = time;
+                break;
+            }
+            case 22: {//Move until beacon is within range
+                scan(allTrackables.get(2));
+                navigateBlind(targetDegrees, .25);
+                if (sonar.getUltrasonicLevel() <= 15)
+                    control = 26;
+                if (segmentTime + 125 < time)
+                    control = 23;
+                break;
+            }
+            case 23: {//Periodic angle adjustment for course correction                             //coord adjust
+                scan(allTrackables.get(2));
+                double targetx = posx - 1512;
+                double targety = posy - 1172;
+
+                targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.acos(targetx / targety)));
+                telemetry.addData("Status", "Checking lineup...");
+                control = 22;
+                segmentTime = time;
+                break;
+            }
+            case 24: {//Alternate if beacon is not seen on first try
+                scan(allTrackables.get(2));
+                if (((VuforiaTrackableDefaultListener) allTrackables.get(2).getListener()).isVisible() || navigateTime(180, .25, 1000)) {
+                    control = 25;
+                    segmentTime = time;
+                }
+                break;
+            }
+            case 25: {//Delay before move to beacon
+                scan(allTrackables.get(2));
+                if (segmentTime + 1000 < time)
+                    control = 21;
+                allStop();
+                break;
+            }
+            case 26: {
+                allStop();
+                if (color.blue() > 180)
+                    pusher.setPosition(1);
+                else
+                    pusher.setPosition(0);
+                control = 27;
+                segmentTime = time;
+                break;
+            }
+            case 27: {
+                allStop();
+                if (segmentTime + 1000 < time)
+                    control = 28;
+                break;
+            }
+            case 28: {
+                if (navigateTime(90, .25, 1500))
+                    control = 29;
+                break;
+            }
+            case 29: {
+                navigateBlind(270, .35);
+                if (sonar.getUltrasonicLevel() >= 50)
+                    control = 30;
+                break;
+            }
+            default: {// hopefully this one runs too
                 allStop();
             }
         }
@@ -303,6 +451,16 @@ public class Auto2 extends OpMode {
             return false;
         }
         return true;
+    }
+    public void navigateBlind(int deg, double power)
+    {
+        double x = Math.cos(deg * (Math.PI/180.0)), y = Math.sin(deg * (Math.PI/180.0));
+
+        double correction = correct();
+        frontLeft.setPower((-(-y - x)/2) * power + correction);
+        backLeft.setPower(((-y + x)/2) * power + correction);
+        frontRight.setPower(((y - x)/2) * power + correction);
+        backRight.setPower((-(y + x)/2) * power + correction);
     }
 
     public void navigate(int deg, double power)
