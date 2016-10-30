@@ -140,7 +140,7 @@ public class OmnibotAutoTest extends OpMode {
         OpenGLMatrix phoneLocationOnRobot = OpenGLMatrix
                 .translation(mmBotWidth/2,(float)44.45,200)
                 .multiplied(Orientation.getRotationMatrix(
-                        AxesReference.EXTRINSIC, AxesOrder.YZY,
+                        AxesReference.EXTRINSIC, AxesOrder.XZX, //Changed from YZY
                         AngleUnit.DEGREES, -90, 0, 0));
         RobotLog.ii(TAG, "phone=%s", format(phoneLocationOnRobot));
 

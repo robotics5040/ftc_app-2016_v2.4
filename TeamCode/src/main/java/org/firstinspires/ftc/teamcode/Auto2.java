@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.ftccommon.DbgLog;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -29,7 +30,7 @@ import java.util.List;
  */
 @Autonomous (name = "Blue 1", group = "Blue Autonomous")
 public class Auto2 extends OpMode {
-    int control = 2, degrees = 0, previousHeading = 0, heading, trueHeading, target, startDegrees, targetDegrees;
+    int control = 2, degrees = 0, previousHeading = 0, heading, trueHeading, target, startDegrees, targetDegrees, initialDegrees = 0;
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
@@ -54,8 +55,13 @@ public class Auto2 extends OpMode {
         frontRight = hardwareMap.dcMotor.get("frontRight");
         backLeft = hardwareMap.dcMotor.get("backLeft");
         backRight = hardwareMap.dcMotor.get("backRight");
+        sonar = hardwareMap.ultrasonicSensor.get("sonar");
+        color = hardwareMap.colorSensor.get("color");
+        pusher = hardwareMap.servo.get("pusher");
+
         gyro = hardwareMap.gyroSensor.get("gyro");
         gyro.calibrate();
+        pusher.setPosition(0);
 
         frontLeft.setDirection(DcMotor.Direction.FORWARD);
         backLeft.setDirection(DcMotor.Direction.FORWARD);
@@ -73,17 +79,11 @@ public class Auto2 extends OpMode {
 
         VuforiaTrackables targets = this.vuforia.loadTrackablesFromAsset("FTC_2016-17");
 
-        VuforiaTrackable redWheels  = targets.get(0); //load gears
-        redWheels.setName("Wheels");
+        VuforiaTrackable blueWheels  = targets.get(0); //load gears
+        blueWheels.setName("Wheels");
 
-        VuforiaTrackable redTools  = targets.get(1); //load tools
-        redTools.setName("Tools");
-
-        VuforiaTrackable redLegos  = targets.get(2); //load gears
-        redLegos.setName("Legos");
-
-        VuforiaTrackable redGears  = targets.get(3); //load gears
-        redGears.setName("Gears");
+        VuforiaTrackable blueLegos  = targets.get(2); //load gears
+        blueLegos.setName("Legos");
 
         allTrackables = new ArrayList<VuforiaTrackable>();
         allTrackables.addAll(targets);
@@ -92,21 +92,21 @@ public class Auto2 extends OpMode {
         float mmBotWidth       = (float)16.5 * mmPerInch;
         mmFTCFieldWidth  = (12*12 - 2) * mmPerInch;
 
-        OpenGLMatrix redToolsLocationOnField = OpenGLMatrix //set up tracking for tools
-                .translation(mmFTCFieldWidth/2 - (float)863.6, mmFTCFieldWidth/2, 0)
+        OpenGLMatrix blueWheelsLocationOnField = OpenGLMatrix
+                .translation(mmFTCFieldWidth/2, mmFTCFieldWidth/2 - (float)2082.8, 0)
                 .multiplied(Orientation.getRotationMatrix(
                         AxesReference.EXTRINSIC, AxesOrder.XZX,
-                        AngleUnit.DEGREES, 90, 0, 0));
-        redTools.setLocation(redToolsLocationOnField);
-        RobotLog.ii(TAG, "Tools=%s", format(redToolsLocationOnField));
+                        AngleUnit.DEGREES, 90, -90, 0));
+        blueWheels.setLocation(blueWheelsLocationOnField);
+        RobotLog.ii(TAG, "Wheels=%s", format(blueWheelsLocationOnField));
 
-        OpenGLMatrix redGearsLocationOnField = OpenGLMatrix //set up tracking for gears
-                .translation(mmFTCFieldWidth/2 - (float)2082.8, mmFTCFieldWidth/2, 0)
+        OpenGLMatrix blueLegosLocationOnField = OpenGLMatrix
+                .translation(mmFTCFieldWidth/2, mmFTCFieldWidth/2 - (float)863.6, 0)
                 .multiplied(Orientation.getRotationMatrix(
                         AxesReference.EXTRINSIC, AxesOrder.XZX,
-                        AngleUnit.DEGREES, 90, 0, 0));
-        redGears.setLocation(redGearsLocationOnField);
-        RobotLog.ii(TAG, "Gears=%s", format(redGearsLocationOnField));
+                        AngleUnit.DEGREES, 90, -90, 0));
+        blueLegos.setLocation(blueLegosLocationOnField);
+        RobotLog.ii(TAG, "Legos=%s", format(blueLegosLocationOnField));
 
         OpenGLMatrix phoneLocationOnRobot = OpenGLMatrix //set up phone
                 .translation(mmBotWidth/2,(float)44.45,200)
@@ -115,8 +115,8 @@ public class Auto2 extends OpMode {
                         AngleUnit.DEGREES, -90, 0, 0));
         RobotLog.ii(TAG, "phone=%s", format(phoneLocationOnRobot));
 
-        ((VuforiaTrackableDefaultListener)redTools.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
-        ((VuforiaTrackableDefaultListener)redGears.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
+        ((VuforiaTrackableDefaultListener)blueWheels.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
+        ((VuforiaTrackableDefaultListener)blueLegos.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
 
         targets.activate();
     }
@@ -209,6 +209,7 @@ public class Auto2 extends OpMode {
             }
             case 10: {//Wait for robot to completely stop
                 allStop();
+                scan(allTrackables.get(0));
                 if (segmentTime + 1000 < time)
                     control = 11;
                 break;
@@ -218,13 +219,16 @@ public class Auto2 extends OpMode {
                 allStop();
                 scan(allTrackables.get(0));
 
-                //Target x: -515     Target y: 1475
+                //Target x: 1512     Target y: -50
                 double targetx = posx - 1512;
                 double targety = posy - -50;
                 startx = posx;
                 starty = posy;
 
-                targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.acos(targetx / targety)));
+                targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                initialDegrees = targetDegrees;
+                DbgLog.msg("START:");
+                DbgLog.msg(targetDegrees + "");
                 //targetDistance = Math.sqrt(Math.pow(Math.abs(targetx), 2) + Math.pow(Math.abs(targety), 2));
                 control = 12;
                 //telemetry.addData("targetx", targetx);
@@ -234,7 +238,7 @@ public class Auto2 extends OpMode {
             }
             case 12: {//attempt to lineup
                 scan(allTrackables.get(0));
-                navigateBlind(targetDegrees, .25);
+                navigateBlind(targetDegrees - 90, .25);
                 if (sonar.getUltrasonicLevel() <= 15)
                     control = 14;
                 if (segmentTime + 250 < time)
@@ -247,10 +251,11 @@ public class Auto2 extends OpMode {
             }
             case 13: {////check lineup, adjust if veering away from target
                 scan(allTrackables.get(0));
-                double targetx = posx - 512;                                                       //fix coordinates
+                double targetx = posx - 1512;                                                       //fix coordinates
                 double targety = posy - -50;
 
-                targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.acos(targetx / targety)));
+                targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                DbgLog.msg(targetDegrees + "");
                 telemetry.addData("Status", "Checking lineup...");
                 control = 12;
                 segmentTime = time;
@@ -258,6 +263,7 @@ public class Auto2 extends OpMode {
             }
             case 14: {//check beacon
                 allStop();
+                DbgLog.msg("END");
                 if (color.blue() > 200)
                     pusher.setPosition(1);
                 else
@@ -296,7 +302,7 @@ public class Auto2 extends OpMode {
                 break;
             }
             case 19: {//Move until beacon is detected (Delay in detection to clear first beacon)
-                navigateBlind(180, .5);
+                navigateBlind(0, .5);
                 if (segmentTime + 2000 <= time && sonar.getUltrasonicLevel() < 70 && sonar.getUltrasonicLevel() != -1) {
                     control = 20;
                     segmentTime = time;
@@ -323,14 +329,14 @@ public class Auto2 extends OpMode {
                 startx = posx;
                 starty = posy;
 
-                targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.acos(targetx / targety)));
+                targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
                 control = 22;
                 segmentTime = time;
                 break;
             }
             case 22: {//Move until beacon is within range
                 scan(allTrackables.get(2));
-                navigateBlind(targetDegrees, .25);
+                navigateBlind(targetDegrees - 90, .25);
                 if (sonar.getUltrasonicLevel() <= 15)
                     control = 26;
                 if (segmentTime + 125 < time)
@@ -342,7 +348,7 @@ public class Auto2 extends OpMode {
                 double targetx = posx - 1512;
                 double targety = posy - 1172;
 
-                targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.acos(targetx / targety)));
+                targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
                 telemetry.addData("Status", "Checking lineup...");
                 control = 22;
                 segmentTime = time;
@@ -398,6 +404,7 @@ public class Auto2 extends OpMode {
         telemetry.addData("Timer", time - segmentTime);
         telemetry.addData("Control", control);
         telemetry.addData("Heading", trueHeading);
+        telemetry.addData("Initial Degrees", initialDegrees);
 
         if (lastLocation != null) {
             VectorF trans = lastLocation.getTranslation();

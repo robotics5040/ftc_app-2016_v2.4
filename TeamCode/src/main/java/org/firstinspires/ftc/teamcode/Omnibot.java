@@ -13,6 +13,7 @@ public class Omnibot extends OpMode {
     DcMotor frontRight;
     DcMotor backLeft;
     DcMotor backRight;
+    int controlMode = 1;
 
     public void init()
     {
@@ -27,32 +28,57 @@ public class Omnibot extends OpMode {
         backRight.setDirection(DcMotor.Direction.FORWARD);
     }
 
-    public void loop()
-    {
+    public void loop() {
         //gamepad input
-        double rightStickX = gamepad1.right_stick_x;
-        double rightStickY = gamepad1.right_stick_y;
-        double leftStickX = gamepad1.left_stick_x;
-        double leftStickY = gamepad1.left_stick_y;
+        double rx = gamepad1.right_stick_x;
+        double ry = gamepad1.right_stick_y;
+        double lx = gamepad1.left_stick_x;
+        double ly = gamepad1.left_stick_y;
+        if (controlMode == 2) {
+            double ph = rx;
+            rx = -ry;
+            ry = ph;
+        }
+        if (controlMode == 0)
+        {
+            double ph = rx;
+            rx = ry;
+            ry = -ph;
+        }
+        if (controlMode == 3)
+        {
+            rx *= -1;
+            ry *= -1;
+        }
+
+        if (gamepad1.dpad_up)
+            controlMode = 0;
+        if (gamepad1.dpad_right)
+            controlMode = 1;
+        if (gamepad1.dpad_down)
+            controlMode = 2;
+        if (gamepad1.dpad_left)
+            controlMode = 3;
+
         //power multipliers - so that gamepad controls do not function at 100%
         if (gamepad1.right_bumper)
         {
-            rightStickX *= .5;
-            rightStickY *= -.5;
-            leftStickX *= .5;
-            leftStickY *= .5;
+            rx *= .5;
+            ry *= -.5;
+            lx *= .5;
+            ly *= .5;
         }
         else {
-            rightStickX *= .75;
-            rightStickY *= -.75;
-            leftStickX *= .75;
-            leftStickY *= .75;
+            rx *= .75;
+            ry *= -.75;
+            lx *= .75;
+            ly *= .75;
         }//                  direction                               rotation
         //average of the joystick inputs + rotation
-        frontLeft.setPower(((-rightStickY - rightStickX)/2) * .75 + (-.25 * leftStickX));
-        backLeft.setPower(((-rightStickY + rightStickX)/2) * .75 + (-.25 * leftStickX));
-        frontRight.setPower(((rightStickY - rightStickX)/2) * .75 + (-.25 * leftStickX));
-        backRight.setPower(((rightStickY + rightStickX)/2) * .75 + (-.25 * leftStickX));
+        frontLeft.setPower(((-ry - rx)/2) * .75 + (-.25 * lx));
+        backLeft.setPower(((-ry + rx)/2) * .75 + (-.25 * lx));
+        frontRight.setPower(((ry - rx)/2) * .75 + (-.25 * lx));
+        backRight.setPower(((ry + rx)/2) * .75 + (-.25 * lx));
 
         if (gamepad1.x)
             frontLeft.setPower(.5);
