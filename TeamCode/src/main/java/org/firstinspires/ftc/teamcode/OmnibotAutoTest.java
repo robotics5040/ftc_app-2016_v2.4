@@ -5,7 +5,11 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
 import com.qualcomm.robotcore.hardware.GyroSensor;
+import com.qualcomm.robotcore.hardware.I2cAddr;
+import com.qualcomm.robotcore.hardware.I2cDevice;
+import com.qualcomm.robotcore.hardware.I2cDeviceReader;
 import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -42,7 +46,8 @@ public class OmnibotAutoTest extends OpMode {
     List<VuforiaTrackable> allTrackables;
     double posx, posy, posz, startx, starty;
     float mmFTCFieldWidth;
-    ColorSensor color;
+    ColorSensor color, line;
+    DeviceInterfaceModule dim;
 
     public static final String TAG = "Vuforia Sample";
 
@@ -57,7 +62,12 @@ public class OmnibotAutoTest extends OpMode {
         gyro = hardwareMap.gyroSensor.get("gyro");
         gyro.calibrate();
         color = hardwareMap.colorSensor.get("color");
+        I2cAddr newAdress = new I2cAddr(0x1d);
+        color.setI2cAddress(newAdress);
+        line = hardwareMap.colorSensor.get("line");
         color.enableLed(false);
+        line.enableLed(true);
+        dim = hardwareMap.deviceInterfaceModule.get("Device Interface Module 2");
 
         frontLeft.setDirection(DcMotor.Direction.FORWARD);
         backLeft.setDirection(DcMotor.Direction.FORWARD);
@@ -218,8 +228,15 @@ public class OmnibotAutoTest extends OpMode {
         telemetry.addData("Actual Rotation", trueHeading);
         telemetry.addData("Target", target);
         telemetry.addData("Distance from target", trueHeading - target);
+        //telemetry.addData("Color Buffer", colorRead.getReadBuffer());
         telemetry.addData("Red", color.red());
         telemetry.addData("Blue", color.blue());
+        telemetry.addData("Green", color.green());
+        telemetry.addData("Beacon", color.argb());
+        telemetry.addData("Line Red", line.red());
+        telemetry.addData("Line Blue", line.blue());
+        telemetry.addData("Line Green", line.green());
+        telemetry.addData("Line", line.argb());
 
         if (lastLocation != null) {
             VectorF trans = lastLocation.getTranslation();

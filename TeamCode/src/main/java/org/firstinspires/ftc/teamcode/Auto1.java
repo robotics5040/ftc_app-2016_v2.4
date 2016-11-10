@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.GyroSensor;
+import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.RobotLog;
@@ -45,8 +46,10 @@ public class Auto1 extends OpMode {
     double posx, posy, startx, starty, targetDistance;
     float mmFTCFieldWidth;
     ColorSensor color;
+    ColorSensor line;
     UltrasonicSensor sonar;
     Servo pusher;
+    boolean lineUsed = false;
 
     public static final String TAG = "Vuforia Sample";
 
@@ -60,6 +63,9 @@ public class Auto1 extends OpMode {
         gyro = hardwareMap.gyroSensor.get("gyro");
         sonar = hardwareMap.ultrasonicSensor.get("sonar");
         color = hardwareMap.colorSensor.get("color");
+        I2cAddr newAddress = new I2cAddr(0x1d);
+        color.setI2cAddress(newAddress);
+        line = hardwareMap.colorSensor.get("line");
         pusher = hardwareMap.servo.get("pusher");
         pusher.setPosition(1);
         color.enableLed(false);
@@ -221,6 +227,7 @@ public class Auto1 extends OpMode {
             case 11: {//setup for lineup
                 allStop();
                 scan(allTrackables.get(3));
+                System.out.println("AUTO1 LOG: LOG START");
 
                 //Target x: -515     Target y: 1475
                 double targetx = posx - -515;
@@ -228,7 +235,13 @@ public class Auto1 extends OpMode {
                 startx = posx;
                 starty = posy;
 
-                targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                if (targetx < 0)
+                    targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                else if (targetx > 0)
+                    targetDegrees = -(int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                else
+                    targetDegrees = 90;
+                System.out.println("AUTO1 LOG: startx: " + startx + "   starty: " + starty + "   targetx: " + targetx + "   targety: " + targety + "   targetDegrees: " + targetDegrees);
                 //targetDistance = Math.sqrt(Math.pow(Math.abs(targetx), 2) + Math.pow(Math.abs(targety), 2));
                 control = 12;
                 //telemetry.addData("targetx", targetx);
@@ -238,7 +251,13 @@ public class Auto1 extends OpMode {
             }
             case 12: {//attempt to lineup
                 scan(allTrackables.get(3));
-                navigateBlind(targetDegrees, .25);
+                if (line.red() < 5) {
+                    navigateBlind(targetDegrees, .25);
+                    lineUsed = false;
+                } else {
+                    navigateBlind(90, .25);
+                    lineUsed = true;
+                }
                 if (sonar.getUltrasonicLevel() <= 15)
                     control = 14;
                 if (segmentTime + 250 < time)
@@ -254,15 +273,22 @@ public class Auto1 extends OpMode {
                 double targetx = posx - -515;
                 double targety = posy - 1600;
 
-                targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                if (targetx < 0)
+                    targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                else if (targetx > 0)
+                    targetDegrees = -(int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                else
+                    targetDegrees = 90;
+                System.out.println("AUTO1 LOG: targetx: " + targetx + "   targety: " + targety + "   targetDegrees: " + targetDegrees + "   lineUsed: " + lineUsed);
                 telemetry.addData("Status", "Checking lineup...");
                 control = 12;
                 segmentTime = time;
                 break;
             }
             case 14: {//check beacon
+                System.out.println("AUTO1 LOG: SEGMENT 1 END");
                 allStop();
-                if (color.blue() > 200) {
+                if (color.blue() > 5) {
                     pusher.setPosition(1);
                     telemetry.addData("Status", "Blue light detected");
                 }
@@ -332,13 +358,19 @@ public class Auto1 extends OpMode {
                 break;
             }
             case 21: {//Calculate initial movement angle
+                System.out.println("AUTO 1 LOG: SEGMENT 2 START");
                 scan(allTrackables.get(1));
                 double targetx = posx - 680; //Position of beacon
                 double targety = posy - 1600;
                 startx = posx;
                 starty = posy;
 
-                targetDegrees = (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                if (targetx < 0)
+                    targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                else if (targetx > 0)
+                    targetDegrees = -(int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                else
+                    targetDegrees = 90;
                 control = 22;
                 segmentTime = time;
                 telemetry.addData("Status", "Calculating initial angle...");
@@ -346,7 +378,13 @@ public class Auto1 extends OpMode {
             }
             case 22: {//Move until beacon is within range
                 scan(allTrackables.get(1));
-                navigateBlind(targetDegrees, .25);
+                if (line.red() < 5) {
+                    navigateBlind(targetDegrees, .25);
+                    lineUsed = false;
+                } else {
+                    navigateBlind(90, .25);
+                    lineUsed = true;
+                }
                 if (sonar.getUltrasonicLevel() <= 15)
                     control = 26;
                 if (segmentTime + 125 < time)
@@ -359,7 +397,13 @@ public class Auto1 extends OpMode {
                 double targetx = posx - 680;
                 double targety = posy - 1600;
 
-                targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                if (targetx < 0)
+                    targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                else if (targetx > 0)
+                    targetDegrees = -(int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                else
+                    targetDegrees = 90;
+                System.out.println("AUTO1 LOG: targetx: " + targetx + "   targety: " + targety + "   targetDegrees: " + targetDegrees + "   lineUsed: " + lineUsed);
                 telemetry.addData("Status", "Checking lineup...");
                 control = 22;
                 segmentTime = time;
@@ -384,7 +428,8 @@ public class Auto1 extends OpMode {
             }
             case 26: {//Check beacon
                 allStop();
-                if (color.blue() > 180) {
+                System.out.println("AUTO 1 LOG: LOG END");
+                if (color.blue() > 5) {
                     pusher.setPosition(1);
                     telemetry.addData("Status", "Blue light detected");
                 }

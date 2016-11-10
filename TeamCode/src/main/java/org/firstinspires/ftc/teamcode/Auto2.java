@@ -302,8 +302,9 @@ public class Auto2 extends OpMode {
                 break;
             }
             case 19: {//Move until beacon is detected (Delay in detection to clear first beacon)
-                navigateBlind(0, .5);
-                if (segmentTime + 2000 <= time && sonar.getUltrasonicLevel() < 70 && sonar.getUltrasonicLevel() != -1) {
+                scan(allTrackables.get(2));
+                navigateBlind(5, .5);
+                if ((segmentTime + 2000 <= time && sonar.getUltrasonicLevel() < 70 && sonar.getUltrasonicLevel() != -1) || ((VuforiaTrackableDefaultListener) allTrackables.get(2).getListener()).isVisible()) {
                     control = 20;
                     segmentTime = time;
                 }
@@ -356,7 +357,7 @@ public class Auto2 extends OpMode {
             }
             case 24: {//Alternate if beacon is not seen on first try
                 scan(allTrackables.get(2));
-                if (((VuforiaTrackableDefaultListener) allTrackables.get(2).getListener()).isVisible() || navigateTime(180, .25, 1000)) {
+                if (((VuforiaTrackableDefaultListener) allTrackables.get(2).getListener()).isVisible() || navigateTime(0, .25, 1000)) {
                     control = 25;
                     segmentTime = time;
                 }

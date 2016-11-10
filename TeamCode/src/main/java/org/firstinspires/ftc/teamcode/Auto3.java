@@ -45,7 +45,7 @@ public class Auto3 extends OpMode {
     ColorSensor color;
     UltrasonicSensor sonar;
     Servo pusher;
-    ColorSensor TM43;
+    ColorSensor line;
 
 
     public static final String TAG = "Vuforia Sample";
@@ -61,10 +61,10 @@ public class Auto3 extends OpMode {
         sonar = hardwareMap.ultrasonicSensor.get("sonar");
         color = hardwareMap.colorSensor.get("color");
         pusher = hardwareMap.servo.get("pusher");
-        TM43 = hardwareMap.colorSensor.get("TM43");
+        line = hardwareMap.colorSensor.get("line");
         pusher.setPosition(1);
         color.enableLed(false);
-        TM43.enableLed(false);
+        line.enableLed(false);
 
         gyro.calibrate();
 
@@ -245,7 +245,7 @@ public class Auto3 extends OpMode {
             }
             case 12: {//attempt to lineup
                 scan(allTrackables.get(3));
-                if (TM43.red() < 200)
+                if (line.red() < 200)
                     navigateBlind(targetDegrees, .25);
                 else
                     navigateBlind(90, .25);
@@ -412,7 +412,7 @@ public class Auto3 extends OpMode {
         telemetry.addData("Timer", time - segmentTime);
         telemetry.addData("Control", control);
         telemetry.addData("Heading", trueHeading);
-        telemetry.addData("line_detect",TM43.red());
+        telemetry.addData("line_detect",line.red());
 
         if (lastLocation != null) {
             VectorF trans = lastLocation.getTranslation();
