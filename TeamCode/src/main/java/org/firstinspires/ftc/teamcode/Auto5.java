@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.hitechnic.HiTechnicNxtColorSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -12,7 +11,6 @@ import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -26,14 +24,13 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 /**
- * Created by bense on 10/11/2016.
+ * Created by bense on 11/11/2016.
  */
-@Autonomous (name = "Red 1", group = "Red Autonomous")
-public class Auto1 extends OpMode {
-    int control = 0, degrees = 0, previousHeading = 0, heading, trueHeading, target, startDegrees, targetDegrees;
+@Autonomous(name = "Red3", group = "Red Autonomous")
+public class Auto5 extends OpMode {
+    int control = 2, degrees = 0, previousHeading = 0, heading, trueHeading, target, startDegrees, targetDegrees;
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
@@ -45,8 +42,8 @@ public class Auto1 extends OpMode {
     List<VuforiaTrackable> allTrackables;
     double posx, posy, startx, starty, targetDistance;
     float mmFTCFieldWidth;
-    //ColorSensor color;
-    //ColorSensor line;
+    ColorSensor color;
+    ColorSensor line;
     UltrasonicSensor sonar;
     Servo pusher;
     boolean lineUsed = false;
@@ -62,13 +59,14 @@ public class Auto1 extends OpMode {
         backRight = hardwareMap.dcMotor.get("backRight");
         gyro = hardwareMap.gyroSensor.get("gyro");
         sonar = hardwareMap.ultrasonicSensor.get("sonar");
-        /*color = hardwareMap.colorSensor.get("color");
-        I2cAddr newAddress = new I2cAddr(0x1d);
-        color.setI2cAddress(newAddress);
-        line = hardwareMap.colorSensor.get("line");*/
+        color = hardwareMap.colorSensor.get("color");
+        I2cAddr newAddress = new I2cAddr(0x1f);
+        line = hardwareMap.colorSensor.get("line");
+        line.setI2cAddress(newAddress);
         pusher = hardwareMap.servo.get("pusher");
         pusher.setPosition(1);
-        //color.enableLed(false);
+        color.enableLed(false);
+        line.enableLed(true);
 
         gyro.calibrate();
 
@@ -132,15 +130,6 @@ public class Auto1 extends OpMode {
 
     public void loop()
     {
-        /*for (VuforiaTrackable trackable : allTrackables) {
-            telemetry.addData(trackable.getName(), ((VuforiaTrackableDefaultListener) trackable.getListener()).isVisible() ? "Visible" : "Not Visible");    //
-
-            OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener) trackable.getListener()).getUpdatedRobotLocation();
-            if (robotLocationTransform != null) {
-                lastLocation = robotLocationTransform;
-            }
-        }*/
-
         time = System.currentTimeMillis();
 
         heading = gyro.getHeading();
@@ -168,41 +157,13 @@ public class Auto1 extends OpMode {
                 break;
             }
             case 3: {//move into position to shoot (timed move)
-                if (navigateTime(90, .5, 1000))
-                    control = 4;
-                telemetry.addData("Status", "Moving for 1 seconds...");
-                break;
-            }
-            case 4: {//setup for shooting
-                allStop();
-                segmentTime = time;
-                control = 5;
-                telemetry.addData("Status", "Preparing to shoot...");
-                break;
-            }
-            case 5: {//shoot
-                shoot();
-                if (segmentTime + 2000 < time)
-                    control = 6;
-                telemetry.addData("Status", "Shooting for 2 seconds...");
-                break;
-            }
-            case 6: {//setup for turn
-                allStop();
-                segmentTime = time;
-                control = 7;
-                telemetry.addData("Status", "Preparing to turn...");
-                break;
-            }
-            case 7: {//turn 90 degrees left
-                if (rotate('l', -80))
+                if (navigateTime(180, .5, 1000))
                     control = 8;
-                telemetry.addData("Status", "Turning 90 degrees left...");
+                telemetry.addData("Status", "Moving for 1 seconds...");
                 break;
             }
             case 8: {//setup for move
                 allStop();
-                startDegrees -= 90;
                 control = 9;
                 telemetry.addData("Status", "Preparing to move...");
                 break;
@@ -211,21 +172,13 @@ public class Auto1 extends OpMode {
                 navigateBlind(135, .25);
                 scan(allTrackables.get(3));
                 if (((VuforiaTrackableDefaultListener) allTrackables.get(3).getListener()).isVisible()) {
-                    control = 10;
+                    control = 11;
                     segmentTime = time;
                 }
                 telemetry.addData("Status", "Moving to find beacon...");
                 break;
             }
-            case 10: {//Wait for robot to completely stop
-                allStop();
-                if (segmentTime + 1000 < time)
-                    control = 11;
-                telemetry.addData("Status", "Beacon found! Stopping robot...");
-                break;
-            }
             case 11: {//setup for lineup
-                allStop();
                 scan(allTrackables.get(3));
                 System.out.println("AUTO1 LOG: LOG START");
 
@@ -251,13 +204,15 @@ public class Auto1 extends OpMode {
             }
             case 12: {//attempt to lineup
                 scan(allTrackables.get(3));
-                //if (line.red() < 5) {
-                    navigateBlind(targetDegrees, .25);
-                /*    lineUsed = false;
+                if (line.red() < 5) {
+                navigateBlind(targetDegrees, .25);
+                    lineUsed = false;
+                } else if (!((VuforiaTrackableDefaultListener) allTrackables.get(3).getListener()).isVisible()) {
+                    navigateBlind(135, .25);
                 } else {
                     navigateBlind(90, .25);
                     lineUsed = true;
-                }*/
+                }
                 if (sonar.getUltrasonicLevel() <= 15)
                     control = 14;
                 if (segmentTime + 250 < time)
@@ -288,14 +243,14 @@ public class Auto1 extends OpMode {
             case 14: {//check beacon
                 System.out.println("AUTO1 LOG: SEGMENT 1 END");
                 allStop();
-                /*if (color.blue() > 5) {
+                if (color.blue() > 5) {
                     pusher.setPosition(1);
                     telemetry.addData("Status", "Blue light detected");
                 }
                 else {
                     pusher.setPosition(0);
                     telemetry.addData("Status", "Red light detected");
-                }*/
+                }
                 control = 15;
                 segmentTime = time;
 
@@ -322,142 +277,6 @@ public class Auto1 extends OpMode {
                     control = 18;
                     segmentTime = time;
                 }
-                telemetry.addData("Status", "Moving away from beacon...");
-                break;
-            }
-            case 18: {//Delay before next move
-                allStop();
-                if (segmentTime + 500 < time) {
-                    segmentTime = time;
-                    control = 19;
-                }
-                telemetry.addData("Status", "Robot stopping...");
-                break;
-            }
-            case 19: {//Move until beacon is detected (Delay in detection to clear first beacon)
-                navigateBlind(180, .5);
-                if (segmentTime + 1500 <= time && sonar.getUltrasonicLevel() < 70 && sonar.getUltrasonicLevel() != -1) {
-                    control = 20;
-                    segmentTime = time;
-                }
-                telemetry.addData("Status", "Looking for next beacon...");
-                break;
-            }
-            case 20: {//Stop to allow detection of picture, if picture is not found, go to alternate code
-                allStop();
-                scan(allTrackables.get(1));
-                if (segmentTime + 500 < time) {
-                    if (((VuforiaTrackableDefaultListener) allTrackables.get(1).getListener()).isVisible())
-                        control = 21;
-                    else {
-                        control = 24;
-                        segmentTime = time;
-                    }
-                }
-                telemetry.addData("Status", "Looking for tools...");
-                break;
-            }
-            case 21: {//Calculate initial movement angle
-                System.out.println("AUTO 1 LOG: SEGMENT 2 START");
-                scan(allTrackables.get(1));
-                double targetx = posx - 680; //Position of beacon
-                double targety = posy - 1600;
-                startx = posx;
-                starty = posy;
-
-                if (targetx < 0)
-                    targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
-                else if (targetx > 0)
-                    targetDegrees = -(int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
-                else
-                    targetDegrees = 90;
-                control = 22;
-                segmentTime = time;
-                telemetry.addData("Status", "Calculating initial angle...");
-                break;
-            }
-            case 22: {//Move until beacon is within range
-                scan(allTrackables.get(1));
-                //if (line.red() < 5) {
-                    navigateBlind(targetDegrees, .25);
-                /*    lineUsed = false;
-                } else {
-                    navigateBlind(90, .25);
-                    lineUsed = true;
-                }*/
-                if (sonar.getUltrasonicLevel() <= 15)
-                    control = 26;
-                if (segmentTime + 125 < time)
-                    control = 23;
-                telemetry.addData("Status", "Lining up...");
-                break;
-            }
-            case 23: {//Periodic angle adjustment for course correction
-                scan(allTrackables.get(1));
-                double targetx = posx - 680;
-                double targety = posy - 1600;
-
-                if (targetx < 0)
-                    targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
-                else if (targetx > 0)
-                    targetDegrees = -(int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
-                else
-                    targetDegrees = 90;
-                System.out.println("AUTO1 LOG: targetx: " + targetx + "   targety: " + targety + "   targetDegrees: " + targetDegrees + "   lineUsed: " + lineUsed);
-                telemetry.addData("Status", "Checking lineup...");
-                control = 22;
-                segmentTime = time;
-                break;
-            }
-            case 24: {//Alternate if beacon is not seen on first try
-                scan(allTrackables.get(1));
-                if (((VuforiaTrackableDefaultListener) allTrackables.get(1).getListener()).isVisible() || navigateTime(180, .25, 1000)) {
-                    control = 25;
-                    segmentTime = time;
-                }
-                telemetry.addData("Status", "Could not find beacon! Searching again...");
-                break;
-            }
-            case 25: {//Delay before move to beacon
-                scan(allTrackables.get(1));
-                if (segmentTime + 1000 < time)
-                    control = 21;
-                allStop();
-                telemetry.addData("Status", "Beacon found! Setting up next move...");
-                break;
-            }
-            case 26: {//Check beacon
-                allStop();
-                System.out.println("AUTO 1 LOG: LOG END");
-                /*if (color.blue() > 5) {
-                    pusher.setPosition(1);
-                    telemetry.addData("Status", "Blue light detected");
-                }
-                else {
-                    pusher.setPosition(0);
-                    telemetry.addData("Status", "Red light detected");
-                }*/
-                control = 27;
-                segmentTime = time;
-                break;
-            }
-            case 27: {//Pause to let servo move
-                allStop();
-                if (segmentTime + 1000 < time)
-                    control = 28;
-                telemetry.addData("Status", "Servo moving...");
-                break;
-            }
-            case 28: {//Presses button
-                if (navigateTime(90, .25, 1500))
-                    control = 29;
-                telemetry.addData("Status", "Pressing button...");
-                break;
-            }
-            case 29: {//Moves away from beacon
-                navigateBlind(270, .35);
-                if (sonar.getUltrasonicLevel() >= 50)
-                    control = 30;
                 telemetry.addData("Status", "Moving away from beacon...");
                 break;
             }
@@ -564,9 +383,9 @@ public class Auto1 extends OpMode {
 
     public void checkHeading()
     {
-        if (previousHeading - heading > 300)
+        if (previousHeading - heading > 270)
             degrees += 360;
-        else if (heading - previousHeading > 300)
+        else if (heading - previousHeading > 270)
             degrees -= 360;
     }
 
