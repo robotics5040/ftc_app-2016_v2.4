@@ -53,9 +53,12 @@ public class CompetitionOmnibot extends OpMode {
     }
 
     public void loop() {
-        heading = gyro.getHeading();
+        /*heading = gyro.getHeading();
         trueHeading = degrees + heading;
-        checkHeading();
+        checkHeading();*/
+        heading = gyro.getHeading();
+        if (heading > 180)
+            heading -= 360;
 
         //gamepad input
         double rx = gamepad1.right_stick_x;
@@ -80,13 +83,13 @@ public class CompetitionOmnibot extends OpMode {
         }
 
         if (gamepad1.dpad_up)
-            controlMode = 0;
-        if (gamepad1.dpad_right)
-            controlMode = 1;
-        if (gamepad1.dpad_down)
-            controlMode = 2;
-        if (gamepad1.dpad_left)
             controlMode = 3;
+        if (gamepad1.dpad_right)
+            controlMode = 0;
+        if (gamepad1.dpad_down)
+            controlMode = 1;
+        if (gamepad1.dpad_left)
+            controlMode = 2;
 
         //power multipliers - so that gamepad controls do not function at 100%
         if (gamepad1.right_bumper)
@@ -144,9 +147,12 @@ public class CompetitionOmnibot extends OpMode {
         telemetry.addData("Sweeper pos", sweeper.getCurrentPosition());
         telemetry.addData("Shooter Target Pos", shooter.getTargetPosition());
         telemetry.addData("", "");
-        telemetry.addData("Gyro heading", gyro.getHeading());
+        telemetry.addData("Gyro heading", heading);
         telemetry.addData("Rotations from start", degrees / 360);
         telemetry.addData("True Heading", trueHeading);
+        telemetry.addData("raw x", gyro.rawX());
+        telemetry.addData("raw y", gyro.rawY());
+        telemetry.addData("raw z", gyro.rawZ());
 
         //half rotation = 270 degrees
         if (sweeper.getCurrentPosition() % 270 >= 90 + sweeperResetPos && sweep == 0)
@@ -172,7 +178,7 @@ public class CompetitionOmnibot extends OpMode {
                 }
             }
         }
-        previousHeading = gyro.getHeading();
+        //previousHeading = gyro.getHeading();
     }
 
     public void checkHeading()

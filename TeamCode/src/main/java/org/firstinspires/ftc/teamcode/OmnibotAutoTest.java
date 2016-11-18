@@ -47,7 +47,6 @@ public class OmnibotAutoTest extends OpMode {
     double posx, posy, posz, startx, starty;
     float mmFTCFieldWidth;
     ColorSensor color, line;
-    DeviceInterfaceModule dim;
 
     public static final String TAG = "Vuforia Sample";
 
@@ -67,7 +66,6 @@ public class OmnibotAutoTest extends OpMode {
         line = hardwareMap.colorSensor.get("line");
         color.enableLed(false);
         line.enableLed(true);
-        dim = hardwareMap.deviceInterfaceModule.get("Device Interface Module 2");
 
         frontLeft.setDirection(DcMotor.Direction.FORWARD);
         backLeft.setDirection(DcMotor.Direction.FORWARD);
@@ -80,7 +78,7 @@ public class OmnibotAutoTest extends OpMode {
 
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(com.qualcomm.ftcrobotcontroller.R.id.cameraMonitorViewId);
         parameters.vuforiaLicenseKey = "AUBrQCz/////AAAAGXg5njs2FEpBgEGX/o6QppZq8c+tG+wbAB+cjpPcC5bwtGmv+kD1lqGbNrlHctdvrdmTJ9Fm1OseZYM15VBaiF++ICnjCSY/IHPhjGW9TXDMAOv/Pdz/T5H86PduPVVKvdGiQ/gpE8v6HePezWRRWG6CTA21itPZfj0xDuHdqrAGGiIQXcUbCTfRAkY7HwwRfQOM1aDhmeAaOvkPPCnaA228iposAByBHmA2rkx4/SmTtN82rtOoRn3/I1PA9RxMiWHWlU67yMQW4ExpTe2eRtq7fPGCCjFeXqOl57au/rZySASURemt7pwbprumwoyqYLgK9eJ6hC2UqkJO5GFzTi3XiDNOYcaFOkP71P5NE/BB";
-        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
+        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.FRONT;
         this.vuforia = ClassFactory.createVuforiaLocalizer(parameters);
 
         VuforiaTrackables targets = this.vuforia.loadTrackablesFromAsset("FTC_2016-17");
@@ -151,7 +149,7 @@ public class OmnibotAutoTest extends OpMode {
                 .translation(mmBotWidth/2,(float)44.45,200)
                 .multiplied(Orientation.getRotationMatrix(
                         AxesReference.EXTRINSIC, AxesOrder.XZX, //Changed from YZY
-                        AngleUnit.DEGREES, -90, 0, 0));
+                        AngleUnit.DEGREES, -90, -90, 0));
         RobotLog.ii(TAG, "phone=%s", format(phoneLocationOnRobot));
 
         ((VuforiaTrackableDefaultListener)blueWheels.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);

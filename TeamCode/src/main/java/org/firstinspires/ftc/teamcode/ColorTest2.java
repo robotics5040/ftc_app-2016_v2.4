@@ -46,8 +46,8 @@ public class ColorTest2 extends OpMode {
     public void loop()
     {
         heading = gyro.getHeading();
-        trueHeading = degrees + heading;
         checkHeading();
+        trueHeading = degrees + heading;
 
         if (line.blue() >= 5)
             pusher.setPosition(1);
@@ -87,9 +87,9 @@ public class ColorTest2 extends OpMode {
 
     public void checkHeading()
     {
-        if (previousHeading - heading > 300)
+        if (previousHeading - heading > 270)
             degrees += 360;
-        else if (heading - previousHeading > 300)
+        else if (heading - previousHeading > 270)
             degrees -= 360;
     }
 }

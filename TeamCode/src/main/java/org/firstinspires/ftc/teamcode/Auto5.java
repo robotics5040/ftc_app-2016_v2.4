@@ -30,7 +30,7 @@ import java.util.List;
  */
 @Autonomous(name = "Red3", group = "Red Autonomous")
 public class Auto5 extends OpMode {
-    int control = 2, degrees = 0, previousHeading = 0, heading, trueHeading, target, startDegrees, targetDegrees;
+    int control = 2, target, startDegrees, targetDegrees;
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
@@ -81,7 +81,7 @@ public class Auto5 extends OpMode {
 
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(com.qualcomm.ftcrobotcontroller.R.id.cameraMonitorViewId);
         parameters.vuforiaLicenseKey = "AUBrQCz/////AAAAGXg5njs2FEpBgEGX/o6QppZq8c+tG+wbAB+cjpPcC5bwtGmv+kD1lqGbNrlHctdvrdmTJ9Fm1OseZYM15VBaiF++ICnjCSY/IHPhjGW9TXDMAOv/Pdz/T5H86PduPVVKvdGiQ/gpE8v6HePezWRRWG6CTA21itPZfj0xDuHdqrAGGiIQXcUbCTfRAkY7HwwRfQOM1aDhmeAaOvkPPCnaA228iposAByBHmA2rkx4/SmTtN82rtOoRn3/I1PA9RxMiWHWlU67yMQW4ExpTe2eRtq7fPGCCjFeXqOl57au/rZySASURemt7pwbprumwoyqYLgK9eJ6hC2UqkJO5GFzTi3XiDNOYcaFOkP71P5NE/BB";
-        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
+        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.FRONT;
         this.vuforia = ClassFactory.createVuforiaLocalizer(parameters);
 
         VuforiaTrackables targets = this.vuforia.loadTrackablesFromAsset("FTC_2016-17");
@@ -132,9 +132,9 @@ public class Auto5 extends OpMode {
     {
         time = System.currentTimeMillis();
 
-        heading = gyro.getHeading();
-        trueHeading = degrees + heading;
-        checkHeading();
+        int heading = gyro.getHeading();
+        if (heading > 180)
+             heading =- 360;
 
         switch (control)
         {
@@ -151,47 +151,64 @@ public class Auto5 extends OpMode {
                 break;
             }
             case 2: {//setup for first move
+                startDegrees = heading;
                 segmentTime = time;
                 control = 3;
                 telemetry.addData("Status", "Preparing to move...");
                 break;
             }
             case 3: {//move into position to shoot (timed move)
-                if (navigateTime(180, .5, 1000))
-                    control = 8;
+                if (navigateTime(180, .5, 1000, heading))
+                    control = 4;
                 telemetry.addData("Status", "Moving for 1 seconds...");
                 break;
             }
-            case 8: {//setup for move
+            case 4: {//Setup for slight correction
                 allStop();
+                control = 5;
+                break;
+            }
+            case 5: {//Slight correction turn
+                if (rotate('r', 0, heading))
+                    control = 8;
+                break;
+            }
+            case 8: {//setup for move
                 control = 9;
                 telemetry.addData("Status", "Preparing to move...");
                 break;
             }
             case 9: {//move until target is visible
-                navigateBlind(135, .25);
+                navigateBlind(120, .3, heading);
                 scan(allTrackables.get(3));
                 if (((VuforiaTrackableDefaultListener) allTrackables.get(3).getListener()).isVisible()) {
-                    control = 11;
+                    control = 10;
                     segmentTime = time;
                 }
                 telemetry.addData("Status", "Moving to find beacon...");
+                break;
+            }
+            case 10: {
+                allStop();
+                scan(allTrackables.get(3));
+                if (segmentTime + 1000 < time)
+                    control = 11;
                 break;
             }
             case 11: {//setup for lineup
                 scan(allTrackables.get(3));
                 System.out.println("AUTO1 LOG: LOG START");
 
-                //Target x: -515     Target y: 1475
-                double targetx = posx - -515;
+                //Target x: -510     Target y: 1475
+                double targetx = posx - -510;
                 double targety = posy - 1600;
                 startx = posx;
                 starty = posy;
 
-                if (targetx < 0)
-                    targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
-                else if (targetx > 0)
+                if (targetx > 0)
                     targetDegrees = -(int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                else if (targetx < 0)
+                    targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
                 else
                     targetDegrees = 90;
                 System.out.println("AUTO1 LOG: startx: " + startx + "   starty: " + starty + "   targetx: " + targetx + "   targety: " + targety + "   targetDegrees: " + targetDegrees);
@@ -205,15 +222,15 @@ public class Auto5 extends OpMode {
             case 12: {//attempt to lineup
                 scan(allTrackables.get(3));
                 if (line.red() < 5) {
-                navigateBlind(targetDegrees, .25);
+                    navigateBlind(targetDegrees, .3, heading);
                     lineUsed = false;
                 } else if (!((VuforiaTrackableDefaultListener) allTrackables.get(3).getListener()).isVisible()) {
-                    navigateBlind(135, .25);
+                    navigateBlind(120, .3, heading);
                 } else {
-                    navigateBlind(90, .25);
+                    navigateBlind(90, .3, heading);
                     lineUsed = true;
                 }
-                if (sonar.getUltrasonicLevel() <= 15)
+                if (sonar.getUltrasonicLevel() <= 10)
                     control = 14;
                 if (segmentTime + 250 < time)
                     control = 13;
@@ -229,9 +246,9 @@ public class Auto5 extends OpMode {
                 double targety = posy - 1600;
 
                 if (targetx < 0)
-                    targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
-                else if (targetx > 0)
                     targetDegrees = -(int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                else if (targetx > 0)
+                    targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
                 else
                     targetDegrees = 90;
                 System.out.println("AUTO1 LOG: targetx: " + targetx + "   targety: " + targety + "   targetDegrees: " + targetDegrees + "   lineUsed: " + lineUsed);
@@ -266,18 +283,61 @@ public class Auto5 extends OpMode {
                 break;
             }
             case 16: {//press a button
-                if (navigateTime(90, .5, 500))
+                if (navigateTime(90, .5, 500, heading))
                     control = 17;
                 telemetry.addData("Status", "Pressing button...");
                 break;
             }
             case 17: {//Move backwards until 50mm away from beacon
-                navigateBlind(270, .35);
+                navigateBlind(270, .35, heading);
                 if (sonar.getUltrasonicLevel() >= 50) {
-                    control = 18;
+                    control = 19;
                     segmentTime = time;
                 }
                 telemetry.addData("Status", "Moving away from beacon...");
+                break;
+            }
+            case 18: {
+                boolean lineup = true;
+                scan(allTrackables.get(3));
+                if (heading + 3 < startDegrees && heading - 3 > startDegrees) {
+                    frontRight.setPower(correct(heading) * 1.5);
+                    frontLeft.setPower(correct(heading) * 1.5);
+                    backRight.setPower(correct(heading) * 1.5);
+                    backLeft.setPower(correct(heading) * 1.5);
+                    lineup = false;
+                }
+                if (line.blue() < 5) {
+                    if (posx < -510)
+                        navigateBlind(180, .15, heading);
+                    if (posx > -510)
+                        navigateBlind(0, .15, heading);
+                    lineup = false;
+                }
+                if (lineup)
+                    control = 14;
+
+            }
+            case 19: {
+                allStop();
+                control = 20;
+                break;
+            }
+            case 20: {
+                if (rotate('r', 90, heading)) {
+                    control = 21;
+                    segmentTime = System.currentTimeMillis();
+                }
+                break;
+            }
+            case 21: {
+                if (segmentTime + 500 < time)
+                    control = 22;
+                break;
+            }
+            case 22: {
+                shoot();
+                control = 23;
                 break;
             }
             default: {//Hopefully this only runs when program ends
@@ -288,7 +348,8 @@ public class Auto5 extends OpMode {
 
         telemetry.addData("Timer", time - segmentTime);
         telemetry.addData("Control", control);
-        telemetry.addData("Heading", trueHeading);
+        telemetry.addData("Heading", heading);
+        telemetry.addData("Sonar", sonar.getUltrasonicLevel());
 
         if (lastLocation != null) {
             VectorF trans = lastLocation.getTranslation();
@@ -305,11 +366,9 @@ public class Auto5 extends OpMode {
         } else {
             telemetry.addData("Pos", "Unknown");
         }
-
-        previousHeading = gyro.getHeading();
     }
 
-    public boolean navigate(int deg, double power, double distance) //like unit circle, 90 forwards, 270 backwards
+    public boolean navigate(int deg, double power, double distance, int h) //like unit circle, 90 forwards, 270 backwards
     {
         double x = Math.cos(deg * (Math.PI/180.0)), y = Math.sin(deg * (Math.PI/180.0));
         double targetx = distance * x + startx;
@@ -320,7 +379,7 @@ public class Auto5 extends OpMode {
 
         if (targetx + startx <= posx || targety + starty >= posy)
         {
-            double correction = correct(); //Course correction
+            double correction = correct(h); //Course correction
             frontLeft.setPower((-(-y - x)/2) * power + correction);
             backLeft.setPower(((-y + x)/2) * power + correction);
             frontRight.setPower(((y - x)/2) * power + correction);
@@ -331,13 +390,13 @@ public class Auto5 extends OpMode {
         return true;
     }
 
-    public boolean navigateTime(int deg, double power, long targetTime) //like unit circle, 90 forwards, 270 backwards
+    public boolean navigateTime(int deg, double power, long targetTime, int h) //like unit circle, 90 forwards, 270 backwards
     {
         double x = Math.cos(deg * (Math.PI/180.0)), y = Math.sin(deg * (Math.PI/180.0));
 
         if (segmentTime + targetTime > time)
         {
-            double correction = correct();
+            double correction = correct(h);
             frontLeft.setPower((-(-y - x)/2) * power + correction);
             backLeft.setPower(((-y + x)/2) * power + correction);
             frontRight.setPower(((y - x)/2) * power + correction);
@@ -348,21 +407,21 @@ public class Auto5 extends OpMode {
         return true;
     }
 
-    public void navigateBlind(int deg, double power)
+    public void navigateBlind(int deg, double power, int h)
     {
         double x = Math.cos(deg * (Math.PI/180.0)), y = Math.sin(deg * (Math.PI/180.0));
 
-        double correction = correct();
+        double correction = correct(h);
         frontLeft.setPower((-(-y - x)/2) * power + correction);
         backLeft.setPower(((-y + x)/2) * power + correction);
         frontRight.setPower(((y - x)/2) * power + correction);
         backRight.setPower((-(y + x)/2) * power + correction);
     }
 
-    public boolean rotate(char direction, int deg)
+    public boolean rotate(char direction, int deg, int h)
     {
         target = deg;
-        if (direction == 'r' && trueHeading - target < 0)
+        if (direction == 'r' && h - target < 0)
         {
             frontRight.setPower(-.15);
             frontLeft.setPower(-.15);
@@ -370,7 +429,7 @@ public class Auto5 extends OpMode {
             backLeft.setPower(-.15);
             return false;
         }
-        else if (direction == 'l' && trueHeading - target > 0)
+        else if (direction == 'l' && h - target > 0)
         {
             frontRight.setPower(.15);
             frontLeft.setPower(.15);
@@ -381,13 +440,13 @@ public class Auto5 extends OpMode {
         return true;
     }
 
-    public void checkHeading()
+    /*public void checkHeading()
     {
         if (previousHeading - heading > 270)
             degrees += 360;
         else if (heading - previousHeading > 270)
             degrees -= 360;
-    }
+    }*/
 
     public void allStop()
     {
@@ -402,11 +461,11 @@ public class Auto5 extends OpMode {
         return transformationMatrix.formatAsTransform();
     }
 
-    public double correct()
+    public double correct(int h)
     {
-        if (trueHeading > startDegrees + 3)
+        if (h > startDegrees + 10)
             return .1;
-        if (trueHeading < startDegrees - 3)
+        if (h < startDegrees - 10)
             return -.1;
         return 0;
     }
