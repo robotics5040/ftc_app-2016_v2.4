@@ -116,7 +116,7 @@ public class Auto5 extends OpMode {
         RobotLog.ii(TAG, "Gears=%s", format(redGearsLocationOnField));
 
         OpenGLMatrix phoneLocationOnRobot = OpenGLMatrix //set up phone
-                .translation(mmBotWidth/2,(float)44.45,200)
+                .translation(mmBotWidth/2,(float)44.45 + 175,200)
                 .multiplied(Orientation.getRotationMatrix(
                         AxesReference.EXTRINSIC, AxesOrder.YZY,
                         AngleUnit.DEGREES, -90, 0, 0));
@@ -134,7 +134,7 @@ public class Auto5 extends OpMode {
 
         int heading = gyro.getHeading();
         if (heading > 180)
-             heading =- 360;
+             heading -= 360;
 
         switch (control)
         {
@@ -324,7 +324,7 @@ public class Auto5 extends OpMode {
                 break;
             }
             case 20: {
-                if (rotate('r', 90, heading)) {
+                if (rotate('r', -90, heading)) {
                     control = 21;
                     segmentTime = System.currentTimeMillis();
                 }
