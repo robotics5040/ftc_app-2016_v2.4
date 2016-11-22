@@ -19,7 +19,7 @@ public class CompetitionOmnibot extends OpMode {
     DcMotor sweeper;
     DcMotor shooter;
     int controlMode = 1, sweep = 0, shooterResetPos, sweeperResetPos;
-    boolean shoot = false;
+    boolean shoot = false, reset = false;
     long segmentTime;
     GyroSensor gyro;
     int previousHeading = 0, heading = 0, degrees = 0, trueHeading = 0;
@@ -126,6 +126,7 @@ public class CompetitionOmnibot extends OpMode {
             shooter.setTargetPosition(930 + shooterResetPos + shooter.getTargetPosition());
             segmentTime = System.currentTimeMillis();
             shoot = true;
+            reset = true;
         }
         if (gamepad2.left_bumper)
         {
@@ -163,16 +164,17 @@ public class CompetitionOmnibot extends OpMode {
         //quarter rotation = 270 degrees
         if (shoot == true)
         {
-            if (shooter.getTargetPosition() > shooter.getCurrentPosition()) {
+            if (shooter.getTargetPosition() > shooter.getCurrentPosition() && reset) {
                 if (segmentTime + 200 < System.currentTimeMillis())
                     shooter.setPower(.5);
                 else
                     shooter.setPower(1);
             }
             else {
-                if (shooter.getCurrentPosition() > shooter.getTargetPosition())
+                if (shooter.getCurrentPosition() > shooter.getTargetPosition()) {
+                    reset = false;
                     shooter.setPower(-.1);
-                else {
+                } else {
                     shooter.setPower(0);
                     shoot = false;
                 }
