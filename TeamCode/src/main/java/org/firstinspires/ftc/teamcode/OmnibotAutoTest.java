@@ -39,6 +39,7 @@ public class OmnibotAutoTest extends OpMode {
     DcMotor frontRight;
     DcMotor backLeft;
     DcMotor backRight;
+    DcMotor shooter;
     GyroSensor gyro;
     float robotBearing;
     Long time, startTime, startTime2;
@@ -58,6 +59,7 @@ public class OmnibotAutoTest extends OpMode {
         frontRight = hardwareMap.dcMotor.get("frontRight");
         backLeft = hardwareMap.dcMotor.get("backLeft");
         backRight = hardwareMap.dcMotor.get("backRight");
+        shooter = hardwareMap.dcMotor.get("shooter");
         gyro = hardwareMap.gyroSensor.get("gyro");
         gyro.calibrate();
         color = hardwareMap.colorSensor.get("color");
@@ -66,6 +68,9 @@ public class OmnibotAutoTest extends OpMode {
         line = hardwareMap.colorSensor.get("line");
         color.enableLed(false);
         line.enableLed(true);
+
+        shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         frontLeft.setDirection(DcMotor.Direction.FORWARD);
         backLeft.setDirection(DcMotor.Direction.FORWARD);
@@ -235,6 +240,7 @@ public class OmnibotAutoTest extends OpMode {
         telemetry.addData("Line Blue", line.blue());
         telemetry.addData("Line Green", line.green());
         telemetry.addData("Line", line.argb());
+        telemetry.addData("Shooter Degrees", shooter.getCurrentPosition());
 
         if (lastLocation != null) {
             VectorF trans = lastLocation.getTranslation();

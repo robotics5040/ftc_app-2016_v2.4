@@ -122,7 +122,7 @@ public class CompetitionOmnibot extends OpMode {
             sweeper.setPower(1);
             sweep = 1;
         }
-        if (gamepad2.a && !shoot && sweep == 0) {
+        if (gamepad2.a && !reset && sweep == 0) {
             shooter.setTargetPosition(930 + shooterResetPos + shooter.getTargetPosition());
             segmentTime = System.currentTimeMillis();
             shoot = true;
@@ -130,7 +130,7 @@ public class CompetitionOmnibot extends OpMode {
         }
         if (gamepad2.left_bumper)
         {
-            if (gamepad2.right_stick_y > .1 || gamepad2.right_stick_y < -.1 )
+            if (gamepad2.right_stick_y < -.1 )
                 shooter.setPower(gamepad2.right_stick_y);
             else
                 shooter.setPower(0);

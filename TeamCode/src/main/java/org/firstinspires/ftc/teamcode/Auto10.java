@@ -30,7 +30,7 @@ import java.util.List;
  */
 @Autonomous(name = "Blue: Shoot/Park on Center", group = "Blue Autonomous")
 public class Auto10 extends OpMode {
-    int control = 2, target, startDegrees, targetDegrees, shooterStartPos;
+    int control = 0, target, startDegrees, targetDegrees, shooterStartPos;
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
@@ -147,7 +147,7 @@ public class Auto10 extends OpMode {
                 break;
             }
             case 1: {//Initial delay, set control to 2 to skip delay
-                if (segmentTime + 3000 < time) //set to 3 seconds for testing
+                if (segmentTime + 5000 < time) //set to 3 seconds for testing
                     control = 2;
                 telemetry.addData("Status", "Waiting to start...");
                 break;
@@ -187,12 +187,14 @@ public class Auto10 extends OpMode {
                 break;
             }
             case 7: {
-                if (navigateTime(225, .6, 2750, heading))
+                if (navigateTime(225, .6, 2750, heading)) {
                     control = 8;
+                    segmentTime = time;
+                }
                 break;
             }
             case 8: {
-                if (navigateTime(90, .5, 3000, heading))
+                if (navigateTime(90, .5, 2500, heading))
                     control = 9;
                 break;
             }
