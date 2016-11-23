@@ -12,14 +12,17 @@ import com.qualcomm.robotcore.hardware.Servo;
  */
 @TeleOp(name = "CompOmnibot", group = "Competition")
 public class CompetitionOmnibot extends OpMode {
+    //motor variables
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
     DcMotor backRight;
     DcMotor sweeper;
     DcMotor shooter;
+    //program variables
     int controlMode = 1, sweep = 0, shooterResetPos, sweeperResetPos;
-    boolean shoot = false, reset = false;
+    boolean shoot = false, reset = false, motorReset = false, aPressed = false;
+    //gyro thingies
     long segmentTime;
     GyroSensor gyro;
     int previousHeading = 0, heading = 0, degrees = 0, trueHeading = 0;
@@ -122,26 +125,16 @@ public class CompetitionOmnibot extends OpMode {
             sweeper.setPower(1);
             sweep = 1;
         }
-        if (gamepad2.a && !reset && !shoot && sweep == 0) {
+        if (gamepad2.a && !reset && !shoot && sweep == 0 && !aPressed) {
             shooter.setTargetPosition(-1440 + shooterResetPos + shooter.getTargetPosition());
             segmentTime = System.currentTimeMillis();
             shoot = true;
             reset = true;
+            aPressed = true;//sets button pressed to true, sets to false after ball has been shot
         }
-        if (gamepad2.left_bumper)
-        {
-            if (gamepad2.right_stick_y < -.1 )
-                shooter.setPower(gamepad2.right_stick_y);
-            else
-                shooter.setPower(0);
-            if (gamepad2.y)
-            {
-                shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                shooterResetPos = 0;
-                shooter.setTargetPosition(0);
-            }
-        }
+        if (aPressed && !gamepad2.a)//stops program from looping more than once, on shot per one button press
+            aPressed = false;
+
 
 
         telemetry.addData("Shooter pos", shooter.getCurrentPosition());
@@ -156,6 +149,8 @@ public class CompetitionOmnibot extends OpMode {
         telemetry.addData("raw z", gyro.rawZ());
         telemetry.addData("Shoot T/F", shoot);
         telemetry.addData("Reset T/F", reset);
+        telemetry.addData("Shooter Power", shooter.getPower());
+        telemetry.addData("Loop", "No loop");
         //half rotation = 270 degrees
         if (sweeper.getCurrentPosition() % 270 >= 90 + sweeperResetPos && sweep == 0)
             sweeper.setPower(.15);
@@ -166,20 +161,43 @@ public class CompetitionOmnibot extends OpMode {
         if (shoot == true)
         {
             if (shooter.getTargetPosition() < shooter.getCurrentPosition() && reset) {
+                telemetry.addData("Loop", "Shooting");
                 if (segmentTime + 200 < System.currentTimeMillis()) {
                     shooter.setPower(.5);
                 }else
                     shooter.setPower(1);
             }
             else {
-                if (shooter.getCurrentPosition() < shooter.getTargetPosition()) {
-                    reset = false;
+                if (shooter.getCurrentPosition() <= shooter.getTargetPosition()) {
+                    telemetry.addData("Loop", "Reseting");
                     shooter.setPower(-.1);
+                    if (reset)
+                        motorReset = true;
+                    reset = false;
                 } else {
+                    telemetry.addData("Loop", "Reset");
                     shooter.setPower(0);
                     shoot = false;
                 }
             }
+        }
+        if (gamepad2.left_bumper)
+        {
+            if (gamepad2.right_stick_y < -.1 && gamepad2.right_stick_y > .1)
+                shooter.setPower(gamepad2.right_stick_y);
+            else
+                shooter.setPower(0);
+            if (gamepad2.y)
+            {
+                shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                shooterResetPos = 0;
+                shooter.setTargetPosition(0);
+            }
+        }
+        if (motorReset) {
+            motorReset = false;
+            shooter.setPower(0);
         }
         //previousHeading = gyro.getHeading();
     }
