@@ -122,8 +122,8 @@ public class CompetitionOmnibot extends OpMode {
             sweeper.setPower(1);
             sweep = 1;
         }
-        if (gamepad2.a && !reset && sweep == 0) {
-            shooter.setTargetPosition(930 + shooterResetPos + shooter.getTargetPosition());
+        if (gamepad2.a && !reset && !shoot && sweep == 0) {
+            shooter.setTargetPosition(-1440 + shooterResetPos + shooter.getTargetPosition());
             segmentTime = System.currentTimeMillis();
             shoot = true;
             reset = true;
@@ -154,7 +154,8 @@ public class CompetitionOmnibot extends OpMode {
         telemetry.addData("raw x", gyro.rawX());
         telemetry.addData("raw y", gyro.rawY());
         telemetry.addData("raw z", gyro.rawZ());
-
+        telemetry.addData("Shoot T/F", shoot);
+        telemetry.addData("Reset T/F", reset);
         //half rotation = 270 degrees
         if (sweeper.getCurrentPosition() % 270 >= 90 + sweeperResetPos && sweep == 0)
             sweeper.setPower(.15);
@@ -164,14 +165,14 @@ public class CompetitionOmnibot extends OpMode {
         //quarter rotation = 270 degrees
         if (shoot == true)
         {
-            if (shooter.getTargetPosition() > shooter.getCurrentPosition() && reset) {
-                if (segmentTime + 200 < System.currentTimeMillis())
+            if (shooter.getTargetPosition() < shooter.getCurrentPosition() && reset) {
+                if (segmentTime + 200 < System.currentTimeMillis()) {
                     shooter.setPower(.5);
-                else
+                }else
                     shooter.setPower(1);
             }
             else {
-                if (shooter.getCurrentPosition() > shooter.getTargetPosition()) {
+                if (shooter.getCurrentPosition() < shooter.getTargetPosition()) {
                     reset = false;
                     shooter.setPower(-.1);
                 } else {
