@@ -46,7 +46,7 @@ public class Auto5 extends OpMode {
     ColorSensor line;
     UltrasonicSensor sonar;
     Servo pusher;
-    boolean lineUsed = false;
+    boolean lineUsed = false, targetActive;
 
     public static final String TAG = "Vuforia Sample";
 
@@ -64,7 +64,7 @@ public class Auto5 extends OpMode {
         line = hardwareMap.colorSensor.get("line");
         line.setI2cAddress(newAddress);
         pusher = hardwareMap.servo.get("pusher");
-        pusher.setPosition(1);
+        pusher.setPosition(0);
         color.enableLed(false);
         line.enableLed(true);
 
@@ -118,8 +118,8 @@ public class Auto5 extends OpMode {
         OpenGLMatrix phoneLocationOnRobot = OpenGLMatrix //set up phone
                 .translation(mmBotWidth/2,(float)44.45 + 175,200)
                 .multiplied(Orientation.getRotationMatrix(
-                        AxesReference.EXTRINSIC, AxesOrder.YZY,
-                        AngleUnit.DEGREES, -90, 0, 0));
+                        AxesReference.EXTRINSIC, AxesOrder.XZX,
+                        AngleUnit.DEGREES, -90, -90, 0));
         RobotLog.ii(TAG, "phone=%s", format(phoneLocationOnRobot));
 
         ((VuforiaTrackableDefaultListener)redTools.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
@@ -165,12 +165,7 @@ public class Auto5 extends OpMode {
             }
             case 4: {//Setup for slight correction
                 allStop();
-                control = 5;
-                break;
-            }
-            case 5: {//Slight correction turn
-                if (rotate('r', 0, heading))
-                    control = 8;
+                control = 8;
                 break;
             }
             case 8: {//setup for move
@@ -180,75 +175,116 @@ public class Auto5 extends OpMode {
             }
             case 9: {//move until target is visible
                 navigateBlind(120, .3, heading);
-                scan(allTrackables.get(3));
-                if (((VuforiaTrackableDefaultListener) allTrackables.get(3).getListener()).isVisible()) {
-                    control = 10;
+                targetActive = scan(allTrackables.get(3));
+                if (line.alpha() > 20) {
+                    control = 5;
                     segmentTime = time;
                 }
                 telemetry.addData("Status", "Moving to find beacon...");
                 break;
             }
-            case 10: {
+            case 5: {
+                scan(allTrackables.get(3));
+                allStop();
+                if (segmentTime + 500 < time)
+                    control = 6;
+                break;
+            }
+            case 6: {
+                scan(allTrackables.get(3));
+                if (heading + 2 < 0) {
+                    frontRight.setPower(-.1);
+                    frontLeft.setPower(-.1);
+                    backRight.setPower(-.1);
+                    backLeft.setPower(-.1);
+                } else if (heading - 2 > 0) {
+                    frontRight.setPower(.1);
+                    frontLeft.setPower(.1);
+                    backRight.setPower(.1);
+                    backLeft.setPower(.1);
+                } else {
+                    allStop();
+                    control = 7;
+                }
+                break;
+            }
+            case 7: {
                 allStop();
                 scan(allTrackables.get(3));
+                double targetx = posx - -510;
+                double targety = posy - 1475;
+
+                if (targetx < 0)
+                    targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                else if (targetx > 0)
+                    targetDegrees = (int) -((180 / Math.PI) * (Math.atan(targety / targetx)));
+                else
+                    targetDegrees = 90;
+
+                //targetDegrees -= heading;
+                control = 12;
+                break;
+            }
+            case 10: {
+                allStop();
+                targetActive = scan(allTrackables.get(3));
                 if (segmentTime + 1000 < time)
                     control = 11;
                 break;
             }
             case 11: {//setup for lineup
-                scan(allTrackables.get(3));
+                targetActive = scan(allTrackables.get(3));
                 System.out.println("AUTO1 LOG: LOG START");
 
                 //Target x: -510     Target y: 1475
                 double targetx = posx - -510;
-                double targety = posy - 1600;
+                double targety = posy - 1200;
                 startx = posx;
                 starty = posy;
 
                 if (targetx > 0)
-                    targetDegrees = -(int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                    targetDegrees = (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
                 else if (targetx < 0)
-                    targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                    targetDegrees = 180 + (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
                 else
                     targetDegrees = 90;
                 System.out.println("AUTO1 LOG: startx: " + startx + "   starty: " + starty + "   targetx: " + targetx + "   targety: " + targety + "   targetDegrees: " + targetDegrees);
                 //targetDistance = Math.sqrt(Math.pow(Math.abs(targetx), 2) + Math.pow(Math.abs(targety), 2));
                 control = 12;
-                //telemetry.addData("targetx", targetx);
-                //telemetry.addData("targety", targety);
+                telemetry.addData("target degrees", targetDegrees);
+
                 telemetry.addData("Status", "Calculating initial angle...");
                 break;
             }
             case 12: {//attempt to lineup
-                scan(allTrackables.get(3));
-                if (line.red() < 5) {
+                if (line.red() < 10) {
                     navigateBlind(targetDegrees, .3, heading);
                     lineUsed = false;
-                } else if (!((VuforiaTrackableDefaultListener) allTrackables.get(3).getListener()).isVisible()) {
-                    navigateBlind(120, .3, heading);
                 } else {
                     navigateBlind(90, .3, heading);
                     lineUsed = true;
                 }
-                if (sonar.getUltrasonicLevel() <= 10)
-                    control = 14;
-                if (segmentTime + 250 < time)
-                    control = 13;
-                telemetry.addData("Sonar", sonar.getUltrasonicLevel());
-                //telemetry.addData("distance", targetDistance);
-                telemetry.addData("degrees", targetDegrees);
+                if (sonar.getUltrasonicLevel() <= 10 && sonar.getUltrasonicLevel() > -1)
+                    control = 99;
+
+                //System.out.println("AUTO1 LOG: targetx: " + targetx + "   targety: " + targety + "   targetDegrees: " + targetDegrees + "   lineUsed: " + lineUsed);
+
                 telemetry.addData("Status", "Lining up...");
+                telemetry.addData("posx", posx);
+                telemetry.addData("posy", posy);
+                //telemetry.addData("targetx", targetx);
+                //telemetry.addData("targety", targety);
                 break;
             }
             case 13: {//check lineup, adjust if veering away from target
-                scan(allTrackables.get(3));
+                targetActive = scan(allTrackables.get(3));
                 double targetx = posx - -515;
-                double targety = posy - 1600;
+                double targety = posy - 1200;
 
                 if (targetx < 0)
-                    targetDegrees = -(int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                    targetDegrees = (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
                 else if (targetx > 0)
-                    targetDegrees = 180 - (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                    targetDegrees = 180 + (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
                 else
                     targetDegrees = 90;
                 System.out.println("AUTO1 LOG: targetx: " + targetx + "   targety: " + targety + "   targetDegrees: " + targetDegrees + "   lineUsed: " + lineUsed);
@@ -260,7 +296,7 @@ public class Auto5 extends OpMode {
             case 14: {//check beacon
                 System.out.println("AUTO1 LOG: SEGMENT 1 END");
                 allStop();
-                if (color.blue() > 5) {
+                if (color.blue() > color.red()) {
                     pusher.setPosition(1);
                     telemetry.addData("Status", "Blue light detected");
                 }
@@ -299,7 +335,7 @@ public class Auto5 extends OpMode {
             }
             case 18: {
                 boolean lineup = true;
-                scan(allTrackables.get(3));
+                targetActive = scan(allTrackables.get(3));
                 if (heading + 3 < startDegrees && heading - 3 > startDegrees) {
                     frontRight.setPower(correct(heading) * 1.5);
                     frontLeft.setPower(correct(heading) * 1.5);
@@ -346,10 +382,18 @@ public class Auto5 extends OpMode {
             }
         }
 
+        telemetry.addData("Line", line.alpha());
         telemetry.addData("Timer", time - segmentTime);
         telemetry.addData("Control", control);
         telemetry.addData("Heading", heading);
         telemetry.addData("Sonar", sonar.getUltrasonicLevel());
+        telemetry.addData("Target degrees", targetDegrees);
+        if (color.blue() > color.red())
+            telemetry.addData("Color", "Blue");
+        else if (color.red() > color.blue())
+            telemetry.addData("Color", "Red");
+        else
+            telemetry.addData("Color", "Unknown");
 
         if (lastLocation != null) {
             VectorF trans = lastLocation.getTranslation();
@@ -464,9 +508,9 @@ public class Auto5 extends OpMode {
     public double correct(int h)
     {
         if (h > startDegrees + 10)
-            return .1;
+            return .05;
         if (h < startDegrees - 10)
-            return -.1;
+            return -.05;
         return 0;
     }
 
@@ -475,7 +519,7 @@ public class Auto5 extends OpMode {
         return true;
     }
 
-    public void scan(VuforiaTrackable t) //for t, use allTrackables.get(). 0 is Wheels, 1 is Tools, 2 is Legos, 3 is Gears
+    public boolean scan(VuforiaTrackable t) //for t, use allTrackables.get(). 0 is Wheels, 1 is Tools, 2 is Legos, 3 is Gears
     {
         telemetry.addData(t.getName(), ((VuforiaTrackableDefaultListener) t.getListener()).isVisible() ? "Visible" : "Not Visible");    //
 
@@ -483,5 +527,9 @@ public class Auto5 extends OpMode {
         if (robotLocationTransform != null) {
             lastLocation = robotLocationTransform;
         }
+
+        if (((VuforiaTrackableDefaultListener) t.getListener()).isVisible())
+            return true;
+        return false;
     }
 }

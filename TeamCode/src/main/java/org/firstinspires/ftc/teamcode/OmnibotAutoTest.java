@@ -34,7 +34,7 @@ import java.util.List;
 //change
 @Autonomous(name = "Omnibot Autonomous Testing", group = "Testing")
 public class OmnibotAutoTest extends OpMode {
-    int control = 20, degrees = 0, previousHeading = 0, heading, trueHeading, target, start, startDegrees;
+    int control = 0, degrees = 0, previousHeading = 0, heading, trueHeading, target, start, startDegrees, targetDegrees;
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
@@ -63,9 +63,9 @@ public class OmnibotAutoTest extends OpMode {
         gyro = hardwareMap.gyroSensor.get("gyro");
         gyro.calibrate();
         color = hardwareMap.colorSensor.get("color");
-        I2cAddr newAdress = new I2cAddr(0x1d);
-        color.setI2cAddress(newAdress);
+        I2cAddr newAddress = new I2cAddr(0x1f);
         line = hardwareMap.colorSensor.get("line");
+        line.setI2cAddress(newAddress);
         color.enableLed(false);
         line.enableLed(true);
 
@@ -140,11 +140,8 @@ public class OmnibotAutoTest extends OpMode {
         RobotLog.ii(TAG, "Legos=%s", format(blueLegosLocationOnField));
 
         OpenGLMatrix redGearsLocationOnField = OpenGLMatrix
-                /* Then we translate the target off to the Blue Audience wall.
-                Our translation here is a positive translation in Y.*/
                 .translation(mmFTCFieldWidth/2 - (float)2082.8, mmFTCFieldWidth/2, 0)
                 .multiplied(Orientation.getRotationMatrix(
-                        /* First, in the fixed (field) coordinate system, we rotate 90deg in X */
                         AxesReference.EXTRINSIC, AxesOrder.XZX,
                         AngleUnit.DEGREES, 90, 0, 0));
         redGears.setLocation(redGearsLocationOnField);
@@ -188,40 +185,41 @@ public class OmnibotAutoTest extends OpMode {
 
         switch (control) {
             case 0: {
-                if (time > startTime + 10000)
+                if (scan(allTrackables.get(3)))
                     control = 1;
                 break;
             }
             case 1: {
-                if (rotate('l', -90)) {
-                    startTime2 = time;
-                    allStop();
-                    control = 2;
-                }
+                scan(allTrackables.get(3));
+                double targetx = posx - -510;
+                double targety = posy - 1200;
+                startx = posx;
+                starty = posy;
+
+                if (targetx < 0)
+                    targetDegrees = (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
+                else if (targetx > 0)
+                    targetDegrees = (int) (180 + ((180 / Math.PI) * (Math.atan(targety / targetx))));
+                else
+                    targetDegrees = 90;
+
                 break;
             }
             case 2: {
-                if (time > startTime2 + 2000) {
-                    startx = posx;
-                    starty = posy;
-                    startDegrees = trueHeading;
-                    control = 3;
-                }
+
                 break;
             }
             case 3: {
-                if (navigate(90, .25, 500))
-                    control = 4;
-                break;
+
             }
             case 4: {
-                if (rotate('r', 90))
-                    control = 5;
-                break;
+
             }
             default: {
                 allStop();
             }
+
+
         }
 
         telemetry.addData("Timer", time - startTime);
@@ -239,8 +237,10 @@ public class OmnibotAutoTest extends OpMode {
         telemetry.addData("Line Red", line.red());
         telemetry.addData("Line Blue", line.blue());
         telemetry.addData("Line Green", line.green());
+        telemetry.addData("Line Alpha", line.alpha());
         telemetry.addData("Line", line.argb());
         telemetry.addData("Shooter Degrees", shooter.getCurrentPosition());
+        telemetry.addData("Target Degrees", targetDegrees);
 
         if (lastLocation != null) {
             VectorF trans = lastLocation.getTranslation();
@@ -338,5 +338,19 @@ public class OmnibotAutoTest extends OpMode {
         if (trueHeading < startDegrees - 3)
             return -.1;
         return 0;
+    }
+
+    public boolean scan(VuforiaTrackable t) //for t, use allTrackables.get(). 0 is Wheels, 1 is Tools, 2 is Legos, 3 is Gears
+    {
+        telemetry.addData(t.getName(), ((VuforiaTrackableDefaultListener) t.getListener()).isVisible() ? "Visible" : "Not Visible");    //
+
+        OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener) t.getListener()).getUpdatedRobotLocation();
+        if (robotLocationTransform != null) {
+            lastLocation = robotLocationTransform;
+        }
+
+        if (((VuforiaTrackableDefaultListener) t.getListener()).isVisible())
+            return true;
+        return false;
     }
 }
