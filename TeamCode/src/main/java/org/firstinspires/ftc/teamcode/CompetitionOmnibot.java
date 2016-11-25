@@ -151,13 +151,14 @@ public class CompetitionOmnibot extends OpMode {
         telemetry.addData("Reset T/F", reset);
         telemetry.addData("Shooter Power", shooter.getPower());
         telemetry.addData("Loop", "No loop");
-        //half rotation = 270 degrees
+
         if (sweeper.getCurrentPosition() % 270 >= 90 + sweeperResetPos && sweep == 0)
             sweeper.setPower(.15);
         else if (sweep == 0)
             sweeper.setPower(0);
 
-        //quarter rotation = 270 degrees
+
+        //Shoots the particles
         if (shoot == true)
         {
             if (shooter.getTargetPosition() < shooter.getCurrentPosition() && reset) {
@@ -181,6 +182,7 @@ public class CompetitionOmnibot extends OpMode {
                 }
             }
         }
+        //Manual fire
         if (gamepad2.left_bumper)
         {
             if (gamepad2.right_stick_y < -.1 && gamepad2.right_stick_y > .1)
