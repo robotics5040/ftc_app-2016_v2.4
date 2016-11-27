@@ -53,6 +53,7 @@ public class Auto9 extends OpMode {
     public enum RobotSteps {INIT_START, DELAY, INIT_MOVE, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, MOVE_FORWARD, SPIN, PARK, ALL_DONE};
     RobotSteps control = RobotSteps.INIT_START;
     OpenGLMatrix lastLocation = null;
+    String loopNumber;
     public void init()
     {
         frontLeft = hardwareMap.dcMotor.get("frontLeft");
@@ -170,18 +171,17 @@ public class Auto9 extends OpMode {
                 allStop();
                 control = RobotSteps.SHOOT;
                 shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                shooter.setMode(DcMotor.RunMode.RUN_TO_POSITION);//changed ruhn using encoder to run to position
+                shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);//changed ruhn using encoder to run to position
                 //shooterStartPos = shooter.getCurrentPosition();
                 shooterStartPos = 0;
-                shooter.setTargetPosition(1440);
+                shooter.setTargetPosition(-1440);
                 break;
             }
             case SHOOT: {//shoot
-                /*if (shoot()&& naw == true) {
+                if (!shoot() ) {
                     control = RobotSteps.MOVE_FORWARD;
                     segmentTime = time;
-                    naw = false;
-                }*/
+                }
                 break;
             }
             case MOVE_FORWARD: {//move forward to knock off cap ball
@@ -214,6 +214,7 @@ public class Auto9 extends OpMode {
         telemetry.addData("Motor power", shooter.getPower());
         telemetry.addData("Target Pos", shooter.getTargetPosition());
         telemetry.addData("Current Pos", shooter.getCurrentPosition());
+        telemetry.addData("LoopNumber", loopNumber);
 
         if (lastLocation != null) {
             VectorF trans = lastLocation.getTranslation();
@@ -333,19 +334,29 @@ public class Auto9 extends OpMode {
         return 0;
     }
 
-  /*  public boolean shoot() //Waiting for launcher to be built, no code implemented
+    public boolean shoot() //Waiting for launcher to be built, no code implemented
     {
-        *//*if (shooter.getCurrentPosition() > -720)
+        boolean returnstatement = false;
+
+        if (shooter.getCurrentPosition() > -720){
             shooter.setPower(1);
-        else if (shooter.getCurrentPosition() <= -720 && shooter.getCurrentPosition() > shooter.getTargetPosition())
+            loopNumber = "If statement";
+            returnstatement = true;
+        }
+
+        else if (shooter.getCurrentPosition() <= -720 && shooter.getCurrentPosition() > shooter.getTargetPosition()) {
             shooter.setPower(.5);
+            loopNumber = "Else if statement 1";
+            returnstatement = true;
+        }
         else if (shooter.getCurrentPosition() <= shooter.getTargetPosition()) {
             shooter.setPower(0);
-            return false;
-        }*//*
-        return true;
+            loopNumber = "Else if statement 2";
+            returnstatement = false;
+        }
+        return returnstatement;
     }
-*/
+
     public void scan(VuforiaTrackable t) //for t, use allTrackables.get(). 0 is Wheels, 1 is Tools, 2 is Legos, 3 is Gears
     {
         telemetry.addData(t.getName(), ((VuforiaTrackableDefaultListener) t.getListener()).isVisible() ? "Visible" : "Not Visible");    //
