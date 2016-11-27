@@ -3,15 +3,13 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.GyroSensor;
-import com.qualcomm.robotcore.hardware.Servo;
 
 /**
  * Created by bense on 11/1/2016.
  */
-@TeleOp(name = "CompOmnibot", group = "Competition")
-public class CompetitionOmnibot extends OpMode {
+@TeleOp(name = "CompOmnibot2", group = "Competition")
+public class CompetitionOmnibot2 extends OpMode {
     //motor variables
     DcMotor frontLeft;
     DcMotor frontRight;
@@ -125,15 +123,19 @@ public class CompetitionOmnibot extends OpMode {
             sweeper.setPower(1);
             sweep = 1;
         }
-        if (gamepad2.a && !reset && !shoot && sweep == 0 && !aPressed) {
+        if (!gamepad2.a)//stops program from looping more than once, on shot per one button press
+            aPressed = true;
+        if (gamepad2.a && sweep == 0 && aPressed) {
+
             shooter.setTargetPosition(-1440 + shooterResetPos + shooter.getTargetPosition());//why dont we always reset to 1440
             segmentTime = System.currentTimeMillis();
             shoot = true;
-            reset = true;
-            aPressed = true;//sets button pressed to true, sets to false after ball has been shot
-        }
-        if (aPressed && !gamepad2.a)//stops program from looping more than once, on shot per one button press
+            reset = false;
             aPressed = false;
+            //sets button pressed to true, sets to false after ball has been shot
+        }
+
+
 
 
 
@@ -151,17 +153,18 @@ public class CompetitionOmnibot extends OpMode {
         telemetry.addData("Reset T/F", reset);
         telemetry.addData("Shooter Power", shooter.getPower());
         telemetry.addData("Loop", "No loop");
-
+        telemetry.addData("Busy T/F",shooter.isBusy());
+        telemetry.addData("A pressed", gamepad2.a);
         if (sweeper.getCurrentPosition() % 270 >= 90 + sweeperResetPos && sweep == 0)
             sweeper.setPower(.15);
         else if (sweep == 0)
             sweeper.setPower(0);
 
 
-        //
+        //Shooting + automatic reset
         if (shoot == true)
         {
-            if (shooter.getCurrentPosition() > shooter.getTargetPosition() && reset) {
+            if (shooter.getCurrentPosition() > shooter.getTargetPosition() ) {
                 telemetry.addData("Loop", "Shooting");
                 if (segmentTime + 200 < System.currentTimeMillis()) {
                     shooter.setPower(.5);
@@ -169,7 +172,7 @@ public class CompetitionOmnibot extends OpMode {
                     shooter.setPower(1);
             }
             else {
-                if (shooter.getCurrentPosition() <= shooter.getTargetPosition()) {
+                if (shooter.getCurrentPosition() <= shooter.getTargetPosition()&& !shoot) {
                     telemetry.addData("Loop", "Reseting");
                     shooter.setPower(-.1);
                     if (reset)
