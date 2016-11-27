@@ -30,7 +30,7 @@ import java.util.List;
  */
 @Autonomous(name = "Red: Shoot/Park on Center", group = "Red Autonomous")
 public class Auto9 extends OpMode {
-    int control = 0, target, startDegrees, targetDegrees, shooterStartPos;
+    int  target, startDegrees, targetDegrees, shooterStartPos;
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
@@ -48,10 +48,12 @@ public class Auto9 extends OpMode {
     UltrasonicSensor sonar;
     Servo pusher;
     boolean lineUsed = false;
-
+    boolean naw = true;
     public static final String TAG = "Vuforia Sample";
-
+    public enum RobotSteps {INIT_START, DELAY, INIT_MOVE, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, MOVE_FORWARD, SPIN, PARK, ALL_DONE};
+    RobotSteps control = RobotSteps.INIT_START;
     OpenGLMatrix lastLocation = null;
+    String loopNumber;
     public void init()
     {
         frontLeft = hardwareMap.dcMotor.get("frontLeft");
@@ -140,62 +142,63 @@ public class Auto9 extends OpMode {
 
         switch (control)
         {
-            case 0: {//Set up for initial delay
+            case INIT_START: {//Set up for initial delay
                 segmentTime = time;
-                control = 1;
+                control = RobotSteps.DELAY;
                 telemetry.addData("Status", "Setting up start delay...");
                 break;
             }
-            case 1: {//Initial delay, set control to 2 to skip delay
+            case DELAY: {//Initial delay, set control to 2 to skip delay
                 if (segmentTime + 5000 < time) //set to 3 seconds for testing
-                    control = 2;
+                    control = RobotSteps.INIT_MOVE;
                 telemetry.addData("Status", "Waiting to start...");
                 break;
             }
-            case 2: {//setup for first move
+            case INIT_MOVE: {//setup for first move
                 startDegrees = heading;
                 segmentTime = time;
-                control = 3;
+                control = RobotSteps.MOVE_TO_SHOOT;
                 telemetry.addData("Status", "Preparing to move...");
                 break;
             }
-            case 3: {//move into position to shoot (timed move)
+            case MOVE_TO_SHOOT: {//move into position to shoot (timed move)
                 if (navigateTime(180, .6, 1000, heading))
-                    control = 4;
+                    control = RobotSteps.INIT_SHOOT;
                 telemetry.addData("Status", "Moving for 1 seconds...");
                 break;
             }
-            case 4: {//Setup for shoot
+            case INIT_SHOOT: {//Setup for shoot
                 allStop();
-                control = 5;
+                control = RobotSteps.SHOOT;
                 shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                shooterStartPos = shooter.getCurrentPosition();
-                shooter.setTargetPosition(1060);
+                shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);//changed ruhn using encoder to run to position
+                //shooterStartPos = shooter.getCurrentPosition();
+                shooterStartPos = 0;
+                shooter.setTargetPosition(-1440);
                 break;
             }
-            case 5: {//shoot
-                if (shoot()) {
-                    control = 6;
+            case SHOOT: {//shoot
+                if (!shoot() ) {
+                    control = RobotSteps.MOVE_FORWARD;
                     segmentTime = time;
                 }
                 break;
             }
-            case 6: {
+            case MOVE_FORWARD: {//move forward to knock off cap ball
                 if (navigateTime(180, .6, 750, heading))
-                    control = 7;
+                    control = RobotSteps.SPIN;
                 break;
             }
-            case 7: {
+            case SPIN: {//turns to knock off cap ball
                 if (navigateTime(135, .6, 2500, heading)) {
-                    control = 8;
+                    control = RobotSteps.PARK;
                     segmentTime = time;
                 }
                 break;
             }
-            case 8: {
+            case PARK: {//park on center
                 if (navigateTime(270, .5, 2500, heading))
-                    control = 9;
+                    control = RobotSteps.ALL_DONE;
                 break;
             }
             default: {//Hopefully this only runs when program ends
@@ -208,6 +211,10 @@ public class Auto9 extends OpMode {
         telemetry.addData("Control", control);
         telemetry.addData("Heading", heading);
         telemetry.addData("Sonar", sonar.getUltrasonicLevel());
+        telemetry.addData("Motor power", shooter.getPower());
+        telemetry.addData("Target Pos", shooter.getTargetPosition());
+        telemetry.addData("Current Pos", shooter.getCurrentPosition());
+        telemetry.addData("LoopNumber", loopNumber);
 
         if (lastLocation != null) {
             VectorF trans = lastLocation.getTranslation();
@@ -329,15 +336,25 @@ public class Auto9 extends OpMode {
 
     public boolean shoot() //Waiting for launcher to be built, no code implemented
     {
-        if (shooter.getCurrentPosition() < 540)
+        boolean returnstatement = false;
+
+        if (shooter.getCurrentPosition() > -720){
             shooter.setPower(1);
-        else if (shooter.getCurrentPosition() >= 540 && shooter.getCurrentPosition() < shooter.getCurrentPosition())
-            shooter.setPower(.5);
-        else if (shooter.getCurrentPosition() >= shooter.getTargetPosition()) {
-            shooter.setPower(0);
-            return true;
+            loopNumber = "If statement";
+            returnstatement = true;
         }
-        return false;
+
+        else if (shooter.getCurrentPosition() <= -720 && shooter.getCurrentPosition() > shooter.getTargetPosition()) {
+            shooter.setPower(.5);
+            loopNumber = "Else if statement 1";
+            returnstatement = true;
+        }
+        else if (shooter.getCurrentPosition() <= shooter.getTargetPosition()) {
+            shooter.setPower(0);
+            loopNumber = "Else if statement 2";
+            returnstatement = false;
+        }
+        return returnstatement;
     }
 
     public void scan(VuforiaTrackable t) //for t, use allTrackables.get(). 0 is Wheels, 1 is Tools, 2 is Legos, 3 is Gears
