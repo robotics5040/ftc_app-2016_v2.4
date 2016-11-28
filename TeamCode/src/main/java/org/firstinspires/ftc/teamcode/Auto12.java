@@ -8,29 +8,15 @@ import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.UltrasonicSensor;
-import com.qualcomm.robotcore.util.RobotLog;
 
-import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
-import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by bense on 11/11/2016.
  */
-@Autonomous(name = "Red: Shoot/2 Beacon", group = "Red Autonomous")
-public class Auto11 extends OpMode {
-    int control = 2, target, startDegrees, targetDegrees, correcting = 0, seconaryDegrees, selectedColor;
+@Autonomous(name = "Blue: Shoot/2 Beacon", group = "Red Autonomous")
+public class Auto12 extends OpMode {
+    int control = 2, target, startDegrees, targetDegrees, correcting = 0, seconaryDegrees, rotatedDegrees = 0, selectedColor = 0;
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
@@ -76,8 +62,9 @@ public class Auto11 extends OpMode {
         time = System.currentTimeMillis();
 
         int heading = gyro.getHeading();
-        if (heading > 180)
+        if (heading > 270)
              heading -= 360;
+        heading -= rotatedDegrees;
 
         switch (control)
         {
@@ -102,8 +89,20 @@ public class Auto11 extends OpMode {
             }
             case 3: {//move into position to shoot (timed move)
                 if (navigateTime(180, .5, 1000, heading))
-                    control = 4;
+                    control = 29;
                 telemetry.addData("Status", "Moving for 1 seconds...");
+                break;
+            }
+            case 29: {
+                if (rotate('r', 180, heading)) {
+                    control = 30;
+                    rotatedDegrees = 180;
+                }
+                break;
+            }
+            case 30: {
+                if (reallign(heading))
+                    control = 4;
                 break;
             }
             case 4: {//Setup for slight correction
@@ -116,8 +115,8 @@ public class Auto11 extends OpMode {
                 telemetry.addData("Status", "Preparing to move...");
                 break;
             }
-            case 9: {//move until target is visible
-                navigateBlind(120, .3, heading);
+            case 9: {//move until line is found
+                navigateBlind(60, .3, heading);
                 if (line.alpha() > 20) {
                     control = 5;
                     segmentTime = time;
@@ -145,7 +144,7 @@ public class Auto11 extends OpMode {
                 break;
             }
             case 12: {//attempt to lineup
-                if (line.alpha() > 20) {
+                /*if (line.alpha() > 20) {
                     backRight.setPower(-.2);
                     backLeft.setPower(-.2);
                     frontLeft.setPower(.2);
@@ -169,7 +168,10 @@ public class Auto11 extends OpMode {
                         frontLeft.setPower(.1);
                         frontRight.setPower(.1);
                     }
-                }
+                }*/
+
+                navigateBlind(90, .3, heading);
+
                 if (sonar.getUltrasonicLevel() <= 20 && sonar.getUltrasonicLevel() > 0) {
                     control = 13;
                     segmentTime = time;
@@ -192,13 +194,13 @@ public class Auto11 extends OpMode {
             case 14: {//check beacon
                 allStop();
                 if (color.blue() > color.red()) {
-                    pusher.setPosition(1);
-                    selectedColor = 1;
+                    pusher.setPosition(0);
+                    selectedColor = 2;
                     telemetry.addData("Status", "Blue light detected");
                 }
                 else {
-                    pusher.setPosition(0);
-                    selectedColor = 2;
+                    pusher.setPosition(1);
+                    selectedColor = 1;
                     telemetry.addData("Status", "Red light detected");
                 }
                 control = 15;
@@ -253,12 +255,12 @@ public class Auto11 extends OpMode {
                 break;
             }
             case 19: {
-                if (navigateTime(170, .6, 1000, heading))
+                if (navigateTime(0, .6, 1000, heading))
                     control = 20;
                 break;
             }
             case 20: {
-                navigateBlind(170, .3, heading);
+                navigateBlind(0, .3, heading);
                 if (line.alpha() > 20) {
                     control = 21;
                     allStop();
@@ -309,31 +311,17 @@ public class Auto11 extends OpMode {
                 navigateBlind(90, .3, heading);
 
                 if (sonar.getUltrasonicLevel() <= 20 && sonar.getUltrasonicLevel() > 0) {
-                    control = 31;
-                    allStop();
+                    control = 24;
                     segmentTime = time;
                 }
 
                 telemetry.addData("Status", "Lining up...");
                 break;
             }
-            case 31: {
-                if (reallign(heading))
-                    control = 32;
-                break;
-            }
-            case 32: {
-                navigateBlind(270, .3, heading);
-                if (sonar.getUltrasonicLevel() > 15) {
-                    control = 24;
-                    allStop();
-                }
-                break;
-            }
             case 24: {
                 if (reallign(heading) && segmentTime + 1000 < time ) {
                     if (line.alpha() < 20)
-                        navigateBlind(0, .3, heading);
+                        navigateBlind(180, .3, heading);
                     else {
                         allStop();
                         control = 25;
@@ -344,13 +332,11 @@ public class Auto11 extends OpMode {
             case 25: {//check beacon
                 allStop();
                 if (color.blue() > color.red()) {
-                    pusher.setPosition(1);
-                    selectedColor = 1;
+                    pusher.setPosition(0);
                     telemetry.addData("Status", "Blue light detected");
                 }
                 else {
-                    pusher.setPosition(0);
-                    selectedColor = 2;
+                    pusher.setPosition(1);
                     telemetry.addData("Status", "Red light detected");
                 }
                 control = 26;
@@ -409,6 +395,7 @@ public class Auto11 extends OpMode {
         telemetry.addData("Heading", heading);
         telemetry.addData("Sonar", sonar.getUltrasonicLevel());
         telemetry.addData("Target degrees", targetDegrees);
+        telemetry.addData("rotatedDegrees", rotatedDegrees);
         if (color.blue() > color.red())
             telemetry.addData("Color", "Blue");
         else if (color.red() > color.blue())
@@ -450,18 +437,18 @@ public class Auto11 extends OpMode {
         target = deg;
         if (direction == 'r' && h - target < 0)
         {
-            frontRight.setPower(-.15);
-            frontLeft.setPower(-.15);
-            backRight.setPower(-.15);
-            backLeft.setPower(-.15);
+            frontRight.setPower(-.1);
+            frontLeft.setPower(-.1);
+            backRight.setPower(-.1);
+            backLeft.setPower(-.1);
             return false;
         }
         else if (direction == 'l' && h - target > 0)
         {
-            frontRight.setPower(.15);
-            frontLeft.setPower(.15);
-            backRight.setPower(.15);
-            backLeft.setPower(.15);
+            frontRight.setPower(.1);
+            frontLeft.setPower(.1);
+            backRight.setPower(.1);
+            backLeft.setPower(.1);
             return false;
         }
         return true;
@@ -495,13 +482,13 @@ public class Auto11 extends OpMode {
 
     public boolean reallign (int h)
     {
-        if (h + 3 < 0) {
+        if (h + 4 < 0) {
             frontRight.setPower(-.08);
             frontLeft.setPower(-.08);
             backRight.setPower(-.08);
             backLeft.setPower(-.08);
             segmentTime = time;
-        } else if (h - 3 > 0) {
+        } else if (h - 4 > 0) {
             frontRight.setPower(.08);
             frontLeft.setPower(.08);
             backRight.setPower(.08);
