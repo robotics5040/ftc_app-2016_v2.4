@@ -128,7 +128,7 @@ public class CompetitionOmnibot2 extends OpMode {
         //if (!gamepad2.a)//stops program from looping more than once, on shot per one button press
         //    aPressed = true;
         if (gamepad2.a && sweep == 0 && aPressed && shoot == false) {
-            shooter.setTargetPosition(-1200 + shootCount*-1440);
+            shooter.setTargetPosition(-120 0 + shootCount*-1440);
             shootCount++;
 
             shoot = true;
