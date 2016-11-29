@@ -187,14 +187,17 @@ public class Auto9 extends OpMode {
                 break;
             }
             case SWEEPER_MOVE_BACKWARD: {//swpr.mov -> < var(-.5)
+                sweeper.setPower(-.5);
                 if (segmentTime + 150 < time) {
-                    sweeper.setPower(-.5);
-                    control = RobotSteps.SWEEPER_MOVE_BACKWARD;
+                    sweeper.setPower(0);
+                    segmentTime = time;
+                    control = RobotSteps.SWEEPER_MOVE_FORWARD;
                 }
             }
             case SWEEPER_MOVE_FORWARD: {//swpr.mov -> > var(.7) -- pos+
-                if (segmentTime + 600 < time); {
-                    sweeper.setPower(.7);
+                sweeper.setPower(.7);
+                if (segmentTime + 800 < time)
+                {
                     control = RobotSteps.SHOOT_DOS;
                     shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                     shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
