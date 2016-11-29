@@ -28,16 +28,18 @@ import java.util.List;
 /**
  * Created by bense on 11/11/2016.
  */
-@Autonomous(name = "Blue: Shoot/Park on Center", group = "Blue Autonomous")
+@Autonomous(name = "Blue Pos 1: Shoot 2/Hit Cap Ball", group = "Blue Autonomous")
 public class Auto10 extends OpMode {
-    int  target, startDegrees, targetDegrees, shooterStartPos;
+    int target, startDegrees, targetDegrees, shooterStartPos;
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
     DcMotor backRight;
     DcMotor shooter;
+    DcMotor sweeper;
     GyroSensor gyro;
     float robotBearing;
+
     Long time, startTime, segmentTime;
     VuforiaLocalizer vuforia;
     List<VuforiaTrackable> allTrackables;
@@ -47,15 +49,17 @@ public class Auto10 extends OpMode {
     ColorSensor line;
     UltrasonicSensor sonar;
     Servo pusher;
-    public enum RobotSteps {INIT_START, DELAY, INIT_MOVE, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, MOVE_FORWARD, SPIN, PARK, ALL_DONE};
-    RobotSteps control = RobotSteps.INIT_START;
     boolean lineUsed = false;
 
     public static final String TAG = "Vuforia Sample";
 
+    public enum RobotSteps {INIT_START, DELAY, INIT_MOVE, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, MOVE_FORWARD, SPIN, PARK, ALL_DONE, SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_DOS};
+    RobotSteps control = RobotSteps.INIT_START;
     OpenGLMatrix lastLocation = null;
+    String loopNumber;
     public void init()
     {
+        sweeper = hardwareMap.dcMotor.get("sweeper");
         frontLeft = hardwareMap.dcMotor.get("frontLeft");
         frontRight = hardwareMap.dcMotor.get("frontRight");
         backLeft = hardwareMap.dcMotor.get("backLeft");
@@ -71,6 +75,8 @@ public class Auto10 extends OpMode {
         pusher.setPosition(0);
         color.enableLed(false);
         line.enableLed(true);
+        telemetry.addData("Sweeper Power",sweeper.getPower());
+        telemetry.addData("Sweeper Position",sweeper.getCurrentPosition());
 
         gyro.calibrate();
 
@@ -138,7 +144,7 @@ public class Auto10 extends OpMode {
 
         int heading = gyro.getHeading();
         if (heading > 180)
-             heading -= 360;
+            heading -= 360;
 
         switch (control)
         {
@@ -162,7 +168,7 @@ public class Auto10 extends OpMode {
                 break;
             }
             case MOVE_TO_SHOOT: {//move into position to shoot (timed move)
-                if (navigateTime(180, .6, 1000, heading))
+                if (navigateTime(180, .6, 850, heading))
                     control = RobotSteps.INIT_SHOOT;
                 telemetry.addData("Status", "Moving for 1 seconds...");
                 break;
@@ -171,35 +177,67 @@ public class Auto10 extends OpMode {
                 allStop();
                 control = RobotSteps.SHOOT;
                 shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                shooterStartPos = shooter.getCurrentPosition();
+                shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);//changed ruhn using encoder to run to position
+                //shooterStartPos = shooter.getCurrentPosition();
+                shooterStartPos = 0;
                 shooter.setTargetPosition(-1440);
                 break;
             }
             case SHOOT: {//shoot
-                if (!shoot()) {
+                if (!shoot() ) {
+                    control = RobotSteps.SWEEPER_MOVE_BACKWARD;
+                    segmentTime = time;
+                }
+                break;
+            }
+            case SWEEPER_MOVE_BACKWARD: {//swpr.mov -> < var(-.5)
+                sweeper.setPower(.7);
+                if (segmentTime + 1000 < time) {
+                    sweeper.setPower(0);
+                    segmentTime = time;
+                    control = RobotSteps.SWEEPER_MOVE_FORWARD;
+                }
+                break;
+            }
+            case SWEEPER_MOVE_FORWARD: {//swpr.mov -> > var(.7) -- pos+
+                sweeper.setPower(-.7);
+                if (segmentTime + 200 < time)
+                {
+                    control = RobotSteps.SHOOT_DOS;
+                    shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+                    sweeper.setPower(0);
+                    shooter.setTargetPosition(-1440);
+                }
+                break;
+
+            }
+            case SHOOT_DOS: {//shoot^2
+                if (!shoot() ) {
                     control = RobotSteps.MOVE_FORWARD;
                     segmentTime = time;
                 }
                 break;
+
             }
-            case MOVE_FORWARD: {
-                if (navigateTime(180, .6, 1000, heading))
+            case MOVE_FORWARD: {//move forward to knock off cap ball
+                if (navigateTime(180, .6, 1150, heading))
                     control = RobotSteps.SPIN;
                 break;
             }
-            case SPIN: {
-                if (navigateTime(225, .6, 2750, heading)) {
-                    control = RobotSteps.PARK;
+            case SPIN: {//turns to knock off cap ball
+                if (navigateTime(225, .6, 2500, heading)) {
+                    control = RobotSteps.ALL_DONE;
                     segmentTime = time;
                 }
                 break;
             }
-            case PARK: {
-                if (navigateTime(90, .5, 2500, heading))
+            /*case PARK: {//park on center
+                if (navigateTime(270, .5, 2500, heading))
                     control = RobotSteps.ALL_DONE;
                 break;
-            }
+            }*/
             default: {//Hopefully this only runs when program ends
                 allStop();
                 telemetry.addData("Status", "Switch is in default. Waiting for autonomous to end...");
@@ -331,15 +369,25 @@ public class Auto10 extends OpMode {
 
     public boolean shoot() //Waiting for launcher to be built, no code implemented
     {
-        if (shooter.getCurrentPosition() > -720)
+        boolean returnstatement = false;
+
+        if (shooter.getCurrentPosition() > -720){
             shooter.setPower(1);
-        else if (shooter.getCurrentPosition() <= -720 && shooter.getCurrentPosition() > shooter.getCurrentPosition())
+            loopNumber = "If statement";
+            returnstatement = true;
+        }
+
+        else if (shooter.getCurrentPosition() <= -720 && shooter.getCurrentPosition() > shooter.getTargetPosition()) {
             shooter.setPower(.5);
+            loopNumber = "Else if statement 1";
+            returnstatement = true;
+        }
         else if (shooter.getCurrentPosition() <= shooter.getTargetPosition()) {
             shooter.setPower(0);
-            return false;
+            loopNumber = "Else if statement 2";
+            returnstatement = false;
         }
-        return true;
+        return returnstatement;
     }
 
     public void scan(VuforiaTrackable t) //for t, use allTrackables.get(). 0 is Wheels, 1 is Tools, 2 is Legos, 3 is Gears

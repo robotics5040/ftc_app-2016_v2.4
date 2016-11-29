@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.hitechnic.HiTechnicNxtColorSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -32,6 +33,7 @@ import java.util.NoSuchElementException;
  * Created by bense on 10/11/2016.
  */
 @Autonomous (name = "Red 1", group = "Red Autonomous")
+@Disabled
 public class Auto1 extends OpMode {
     int control = 0, degrees = 0, previousHeading = 0, heading, trueHeading, target, startDegrees, targetDegrees;
     DcMotor frontLeft;
@@ -470,6 +472,7 @@ public class Auto1 extends OpMode {
         telemetry.addData("Timer", time - segmentTime);
         telemetry.addData("Control", control);
         telemetry.addData("Heading", trueHeading);
+
 
         if (lastLocation != null) {
             VectorF trans = lastLocation.getTranslation();

@@ -17,9 +17,10 @@ public class CompetitionOmnibot2 extends OpMode {
     DcMotor backRight;
     DcMotor sweeper;
     DcMotor shooter;
+    String loopNumber;
     //program variables
-    int controlMode = 1, sweep = 0, shooterResetPos, sweeperResetPos;
-    boolean shoot = false, reset = false, motorReset = false, aPressed = false, manualRest = false;
+    int controlMode = 1, sweep = 0, shooterResetPos, sweeperResetPos, shootCount = 0;
+    boolean shoot = false, reset = false, motorReset = false, aPressed = true, manualRest = false;
     //gyro thingies
     long segmentTime;
     GyroSensor gyro;
@@ -124,16 +125,21 @@ public class CompetitionOmnibot2 extends OpMode {
             sweeper.setPower(1);
             sweep = 1;
         }
-        if (!gamepad2.a)//stops program from looping more than once, on shot per one button press
-            aPressed = true;
-        if (gamepad2.a && sweep == 0 && aPressed) {
+        //if (!gamepad2.a)//stops program from looping more than once, on shot per one button press
+        //    aPressed = true;
+        if (gamepad2.a && sweep == 0 && aPressed && shoot == false) {
+            shooter.setTargetPosition(-1200 + shootCount*-1440);
+            shootCount++;
 
-            shooter.setTargetPosition(-1440 + shooterResetPos + shooter.getTargetPosition());//why dont we always reset to 1440
-            segmentTime = System.currentTimeMillis();
             shoot = true;
-            reset = false;
             aPressed = false;
             //sets button pressed to true, sets to false after ball has been shot
+        }
+        if (shoot) {
+            if (!shoot()) {
+                shoot = false;
+                shooter.setPower(0);
+            }
         }
 
 
@@ -159,6 +165,7 @@ public class CompetitionOmnibot2 extends OpMode {
         telemetry.addData("Manual Reset", manualRest);
         telemetry.addData("Output of right Stick", gamepad2.right_stick_y);
         telemetry.addData("Output of left bumper", gamepad2.left_bumper);
+        telemetry.addData("Loop Number", loopNumber);
         if (sweeper.getCurrentPosition() % 270 >= 90 + sweeperResetPos && sweep == 0)
             sweeper.setPower(.15);
         else if (sweep == 0)
@@ -166,7 +173,7 @@ public class CompetitionOmnibot2 extends OpMode {
 
 
         //Shooting + automatic reset
-        if (shoot == true)
+        /*if (shoot == true)
         {
             if (shooter.getCurrentPosition() > shooter.getTargetPosition() ) {
                 telemetry.addData("Loop", "Shooting");
@@ -188,7 +195,7 @@ public class CompetitionOmnibot2 extends OpMode {
                     shoot = false;
                 }
             }
-        }
+        }*/
         //Manual fire
         if (gamepad2.left_bumper)
         {
@@ -207,13 +214,6 @@ public class CompetitionOmnibot2 extends OpMode {
 //                shooter.setTargetPosition(0);
 //            }
         }
-        else {
-            shooter.setPower(0);
-            shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            shooterResetPos = 0;
-            shooter.setTargetPosition(0);
-        }
 
         if (motorReset) {
             motorReset = false;
@@ -229,6 +229,30 @@ public class CompetitionOmnibot2 extends OpMode {
             degrees += 360;
         else if (heading - previousHeading > 270)
             degrees -= 360;
+    }
+
+    public boolean shoot() //Autonomous code
+    {
+        boolean returnstatement = false;
+
+        /*if (shooter.getCurrentPosition() > -720 + shootCount*-1440){
+            shooter.setPower(1);
+            loopNumber = "If statement";
+            returnstatement = true;
+        }*/
+
+        if (shooter.getCurrentPosition() > shooter.getTargetPosition()) {
+            shooter.setPower(.2);
+            loopNumber = "Else if statement 1";
+            returnstatement = true;
+        }
+        else if (shooter.getCurrentPosition() <= shooter.getTargetPosition()) {
+            shooter.setPower(0);
+            aPressed = true;
+            loopNumber = "Else if statement 2";
+            returnstatement = false;
+        }
+        return returnstatement;
     }
 }
 //test test test

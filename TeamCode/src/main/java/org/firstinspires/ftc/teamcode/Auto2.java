@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.ftccommon.DbgLog;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -29,6 +30,7 @@ import java.util.List;
  * Created by bense on 10/11/2016.
  */
 @Autonomous (name = "Blue 1", group = "Blue Autonomous")
+@Disabled
 public class Auto2 extends OpMode {
     int control = 2, degrees = 0, previousHeading = 0, heading, trueHeading, target, startDegrees, targetDegrees, initialDegrees = 0;
     DcMotor frontLeft;

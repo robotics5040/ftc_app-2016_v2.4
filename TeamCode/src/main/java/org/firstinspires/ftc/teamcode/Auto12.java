@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -15,6 +16,7 @@ import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
  * Created by bense on 11/11/2016.
  */
 @Autonomous(name = "Blue: Shoot/2 Beacon", group = "Red Autonomous")
+@Disabled
 public class Auto12 extends OpMode {
     int control = 2, target, startDegrees, targetDegrees, correcting = 0, seconaryDegrees, rotatedDegrees = 0, selectedColor = 0;
     DcMotor frontLeft;
@@ -328,7 +330,7 @@ public class Auto12 extends OpMode {
             case 24: {
                 if (reallign(heading) && segmentTime + 1000 < time ) {
                     if (line.alpha() < 20)
-                        navigateBlind(0, .3, heading);
+                        navigateBlind(180, .3, heading);
                     else {
                         allStop();
                         control = 25;

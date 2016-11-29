@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.adafruit.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
@@ -11,6 +12,7 @@ import com.qualcomm.robotcore.hardware.I2cAddr;
  * Created by bense on 11/7/2016.
  */
 @Autonomous(name = "Color Test", group = "Testing")
+@Disabled
 public class ColorTest extends OpMode {
     ColorSensor color, line;
     DeviceInterfaceModule dim;

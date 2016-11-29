@@ -28,9 +28,9 @@ import java.util.List;
 /**
  * Created by bense on 11/11/2016.
  */
-@Autonomous(name = "Red Pos 1: Shoot 2/Hit Cap Ball", group = "Red Autonomous")
-public class Auto9 extends OpMode {
-    int  target, startDegrees, targetDegrees, shooterStartPos;
+@Autonomous(name = "Blue Pos 2: Shoot 2/Return to Start", group = "Blue Autonomous")
+public class Auto16 extends OpMode {
+    int target, startDegrees, targetDegrees, shooterStartPos;
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
@@ -50,9 +50,10 @@ public class Auto9 extends OpMode {
     UltrasonicSensor sonar;
     Servo pusher;
     boolean lineUsed = false;
-    boolean naw = true;
+
     public static final String TAG = "Vuforia Sample";
-    public enum RobotSteps {INIT_START, DELAY, INIT_MOVE, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, MOVE_FORWARD, SPIN, PARK, ALL_DONE, SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_DOS};
+
+    public enum RobotSteps {INIT_START, DELAY, INIT_MOVE, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, RETURN, PARK, ALL_DONE, SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_DOS};
     RobotSteps control = RobotSteps.INIT_START;
     OpenGLMatrix lastLocation = null;
     String loopNumber;
@@ -71,7 +72,7 @@ public class Auto9 extends OpMode {
         line = hardwareMap.colorSensor.get("line");
         line.setI2cAddress(newAddress);
         pusher = hardwareMap.servo.get("pusher");
-        pusher.setPosition(1);
+        pusher.setPosition(0);
         color.enableLed(false);
         line.enableLed(true);
 
@@ -165,7 +166,7 @@ public class Auto9 extends OpMode {
                 break;
             }
             case MOVE_TO_SHOOT: {//move into position to shoot (timed move)
-                if (navigateTime(180, .6, 850, heading))
+                if (navigateTime(180, .6, 1400, heading))
                     control = RobotSteps.INIT_SHOOT;
                 telemetry.addData("Status", "Moving for 1 seconds...");
                 break;
@@ -212,22 +213,15 @@ public class Auto9 extends OpMode {
             }
             case SHOOT_DOS: {//shoot^2
                 if (!shoot() ) {
-                    control = RobotSteps.MOVE_FORWARD;
+                    control = RobotSteps.RETURN;
                     segmentTime = time;
                 }
                 break;
 
             }
-            case MOVE_FORWARD: {//move forward to knock off cap ball
-                if (navigateTime(180, .6, 1150, heading))
-                    control = RobotSteps.SPIN;
-                break;
-            }
-            case SPIN: {//turns to knock off cap ball
-                if (navigateTime(135, .6, 2500, heading)) {
+            case RETURN: {//move forward to knock off cap ball
+                if (navigateTime(0, .6, 1400, heading))
                     control = RobotSteps.ALL_DONE;
-                    segmentTime = time;
-                }
                 break;
             }
             /*case PARK: {//park on center
@@ -245,10 +239,6 @@ public class Auto9 extends OpMode {
         telemetry.addData("Control", control);
         telemetry.addData("Heading", heading);
         telemetry.addData("Sonar", sonar.getUltrasonicLevel());
-        telemetry.addData("Motor power", shooter.getPower());
-        telemetry.addData("Target Pos", shooter.getTargetPosition());
-        telemetry.addData("Current Pos", shooter.getCurrentPosition());
-        telemetry.addData("LoopNumber", loopNumber);
         telemetry.addData("Sweeper Power",sweeper.getPower());
         telemetry.addData("Sweeper Position",sweeper.getCurrentPosition());
 

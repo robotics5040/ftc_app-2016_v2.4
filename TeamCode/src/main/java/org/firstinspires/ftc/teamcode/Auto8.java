@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -29,6 +30,7 @@ import java.util.List;
  * Created by bense on 11/11/2016.
  */
 @Autonomous(name = "Blue: Shoot/Park on Ramp", group = "Blue Autonomous")
+@Disabled
 public class Auto8 extends OpMode {
     int control = 2, target, startDegrees, targetDegrees, shooterStartPos;
     DcMotor frontLeft;

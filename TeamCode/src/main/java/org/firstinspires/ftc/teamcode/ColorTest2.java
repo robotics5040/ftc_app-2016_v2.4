@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -13,6 +14,7 @@ import com.qualcomm.robotcore.hardware.Servo;
  * Created by bense on 11/9/2016.
  */
 @Autonomous(name = "ColorTest2", group = "Testing")
+@Disabled
 public class ColorTest2 extends OpMode {
     DcMotor frontLeft;
     DcMotor frontRight;

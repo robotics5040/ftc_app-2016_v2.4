@@ -28,8 +28,8 @@ import java.util.List;
 /**
  * Created by bense on 11/11/2016.
  */
-@Autonomous(name = "Red Pos 1: Shoot 2/Hit Cap Ball", group = "Red Autonomous")
-public class Auto9 extends OpMode {
+@Autonomous(name = "Red Pos 2: Shoot/Return to Start", group = "Red Autonomous")
+public class Auto15 extends OpMode {
     int  target, startDegrees, targetDegrees, shooterStartPos;
     DcMotor frontLeft;
     DcMotor frontRight;
@@ -39,7 +39,7 @@ public class Auto9 extends OpMode {
     DcMotor sweeper;
     GyroSensor gyro;
     float robotBearing;
-
+    
     Long time, startTime, segmentTime;
     VuforiaLocalizer vuforia;
     List<VuforiaTrackable> allTrackables;
@@ -52,7 +52,7 @@ public class Auto9 extends OpMode {
     boolean lineUsed = false;
     boolean naw = true;
     public static final String TAG = "Vuforia Sample";
-    public enum RobotSteps {INIT_START, DELAY, INIT_MOVE, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, MOVE_FORWARD, SPIN, PARK, ALL_DONE, SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_DOS};
+    public enum RobotSteps {INIT_START, DELAY, INIT_MOVE, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, RETURN, PARK, ALL_DONE, SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_DOS};
     RobotSteps control = RobotSteps.INIT_START;
     OpenGLMatrix lastLocation = null;
     String loopNumber;
@@ -165,7 +165,7 @@ public class Auto9 extends OpMode {
                 break;
             }
             case MOVE_TO_SHOOT: {//move into position to shoot (timed move)
-                if (navigateTime(180, .6, 850, heading))
+                if (navigateTime(180, .6, 1400, heading))
                     control = RobotSteps.INIT_SHOOT;
                 telemetry.addData("Status", "Moving for 1 seconds...");
                 break;
@@ -212,22 +212,15 @@ public class Auto9 extends OpMode {
             }
             case SHOOT_DOS: {//shoot^2
                 if (!shoot() ) {
-                    control = RobotSteps.MOVE_FORWARD;
+                    control = RobotSteps.RETURN;
                     segmentTime = time;
                 }
                 break;
 
             }
-            case MOVE_FORWARD: {//move forward to knock off cap ball
-                if (navigateTime(180, .6, 1150, heading))
-                    control = RobotSteps.SPIN;
-                break;
-            }
-            case SPIN: {//turns to knock off cap ball
-                if (navigateTime(135, .6, 2500, heading)) {
+            case RETURN: {//move forward to knock off cap ball
+                if (navigateTime(0, .6, 1400, heading))
                     control = RobotSteps.ALL_DONE;
-                    segmentTime = time;
-                }
                 break;
             }
             /*case PARK: {//park on center
