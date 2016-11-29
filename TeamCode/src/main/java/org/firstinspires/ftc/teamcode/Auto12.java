@@ -21,6 +21,7 @@ public class Auto12 extends OpMode {
     DcMotor frontRight;
     DcMotor backLeft;
     DcMotor backRight;
+    DcMotor shooter;
     GyroSensor gyro;
     Long time, startTime, segmentTime;
     float mmFTCFieldWidth;
@@ -28,12 +29,14 @@ public class Auto12 extends OpMode {
     ColorSensor line;
     UltrasonicSensor sonar;
     Servo pusher;
+    String loopNumber;
     public void init()
     {
         frontLeft = hardwareMap.dcMotor.get("frontLeft");
         frontRight = hardwareMap.dcMotor.get("frontRight");
         backLeft = hardwareMap.dcMotor.get("backLeft");
         backRight = hardwareMap.dcMotor.get("backRight");
+        shooter = hardwareMap.dcMotor.get("shooter");
         gyro = hardwareMap.gyroSensor.get("gyro");
         sonar = hardwareMap.ultrasonicSensor.get("sonar");
         color = hardwareMap.colorSensor.get("color");
@@ -44,6 +47,9 @@ public class Auto12 extends OpMode {
         pusher.setPosition(0);
         color.enableLed(false);
         line.enableLed(true);
+
+        shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         gyro.calibrate();
 
@@ -89,8 +95,19 @@ public class Auto12 extends OpMode {
             }
             case 3: {//move into position to shoot (timed move)
                 if (navigateTime(180, .5, 1000, heading))
-                    control = 29;
+                    control = 4;
                 telemetry.addData("Status", "Moving for 1 seconds...");
+                break;
+            }
+            case 4: {//setup for shoot
+                allStop();
+                control = 8;
+                break;
+            }
+            case 8: {//shoot
+                if (!shoot())
+                    control = 29;
+                telemetry.addData("Status", "shooting...");
                 break;
             }
             case 29: {
@@ -102,17 +119,7 @@ public class Auto12 extends OpMode {
             }
             case 30: {
                 if (reallign(heading))
-                    control = 4;
-                break;
-            }
-            case 4: {//Setup for slight correction
-                allStop();
-                control = 8;
-                break;
-            }
-            case 8: {//setup for move
-                control = 9;
-                telemetry.addData("Status", "Preparing to move...");
+                    control = 9;
                 break;
             }
             case 9: {//move until line is found
@@ -321,7 +328,7 @@ public class Auto12 extends OpMode {
             case 24: {
                 if (reallign(heading) && segmentTime + 1000 < time ) {
                     if (line.alpha() < 20)
-                        navigateBlind(180, .3, heading);
+                        navigateBlind(0, .3, heading);
                     else {
                         allStop();
                         control = 25;
@@ -477,7 +484,25 @@ public class Auto12 extends OpMode {
 
     public boolean shoot() //Waiting for launcher to be built, no code implemented
     {
-        return true;
+        boolean returnstatement = false;
+
+        if (shooter.getCurrentPosition() > -720){
+            shooter.setPower(1);
+            loopNumber = "If statement";
+            returnstatement = true;
+        }
+
+        else if (shooter.getCurrentPosition() <= -720 && shooter.getCurrentPosition() > shooter.getTargetPosition()) {
+            shooter.setPower(.5);
+            loopNumber = "Else if statement 1";
+            returnstatement = true;
+        }
+        else if (shooter.getCurrentPosition() <= shooter.getTargetPosition()) {
+            shooter.setPower(0);
+            loopNumber = "Else if statement 2";
+            returnstatement = false;
+        }
+        return returnstatement;
     }
 
     public boolean reallign (int h)
