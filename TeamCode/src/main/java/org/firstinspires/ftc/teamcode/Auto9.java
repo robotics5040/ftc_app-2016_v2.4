@@ -31,6 +31,7 @@ import java.util.List;
 @Autonomous(name = "Red: Shoot/Park on Center", group = "Red Autonomous")
 public class Auto9 extends OpMode {
     int  target, startDegrees, targetDegrees, shooterStartPos;
+    DcMotor sweeper;
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
@@ -50,12 +51,13 @@ public class Auto9 extends OpMode {
     boolean lineUsed = false;
     boolean naw = true;
     public static final String TAG = "Vuforia Sample";
-    public enum RobotSteps {INIT_START, DELAY, INIT_MOVE, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, MOVE_FORWARD, SPIN, PARK, ALL_DONE};
+    public enum RobotSteps {INIT_START, DELAY, INIT_MOVE, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, MOVE_FORWARD, SPIN, PARK, ALL_DONE, SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_DOS};
     RobotSteps control = RobotSteps.INIT_START;
     OpenGLMatrix lastLocation = null;
     String loopNumber;
     public void init()
     {
+        sweeper = hardwareMap.dcMotor.get("sweeper");
         frontLeft = hardwareMap.dcMotor.get("frontLeft");
         frontRight = hardwareMap.dcMotor.get("frontRight");
         backLeft = hardwareMap.dcMotor.get("backLeft");
@@ -179,10 +181,33 @@ public class Auto9 extends OpMode {
             }
             case SHOOT: {//shoot
                 if (!shoot() ) {
+                    control = RobotSteps.SWEEPER_MOVE_BACKWARD;
+                    segmentTime = time;
+                }
+                break;
+            }
+            case SWEEPER_MOVE_BACKWARD: {//swpr.mov -> < var(-.5)
+                if (segmentTime + 150 < time) {
+                    sweeper.setPower(-.5);
+                    control = RobotSteps.SWEEPER_MOVE_BACKWARD;
+                }
+            }
+            case SWEEPER_MOVE_FORWARD: {//swpr.mov -> > var(.7) -- pos+
+                if (segmentTime + 600 < time); {
+                    sweeper.setPower(.7);
+                    control = RobotSteps.SHOOT_DOS;
+                    shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                }
+
+            }
+            case SHOOT_DOS: {//shoot^2
+                if (!shoot() ) {
                     control = RobotSteps.MOVE_FORWARD;
                     segmentTime = time;
                 }
                 break;
+
             }
             case MOVE_FORWARD: {//move forward to knock off cap ball
                 if (navigateTime(180, .6, 750, heading))

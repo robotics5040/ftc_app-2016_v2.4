@@ -125,6 +125,8 @@ public class CompetitionOmnibot extends OpMode {
             sweeper.setPower(1);
             sweep = 1;
         }
+        if (aPressed && !gamepad2.a)//stops program from looping more than once, on shot per one button press
+            aPressed = false;
         if (gamepad2.a && !reset && !shoot && sweep == 0 && !aPressed) {
             shooter.setTargetPosition(-1440 + shooterResetPos + shooter.getTargetPosition());//why dont we always reset to 1440
             segmentTime = System.currentTimeMillis();
@@ -132,9 +134,6 @@ public class CompetitionOmnibot extends OpMode {
             reset = true;
             aPressed = true;//sets button pressed to true, sets to false after ball has been shot
         }
-        if (aPressed && !gamepad2.a)//stops program from looping more than once, on shot per one button press
-            aPressed = false;
-
 
 
         telemetry.addData("Shooter pos", shooter.getCurrentPosition());
