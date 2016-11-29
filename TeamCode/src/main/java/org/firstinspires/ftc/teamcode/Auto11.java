@@ -31,6 +31,7 @@ import java.util.List;
 @Autonomous(name = "Red: Shoot/2 Beacon", group = "Red Autonomous")
 public class Auto11 extends OpMode {
     int control = 2, target, startDegrees, targetDegrees, correcting = 0, seconaryDegrees, selectedColor;
+    DcMotor sweeper;
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
@@ -60,7 +61,9 @@ public class Auto11 extends OpMode {
         pusher = hardwareMap.servo.get("pusher");
         pusher.setPosition(0);
         color.enableLed(false);
+        sweeper = hardwareMap.dcMotor.get("sweeper");
         line.enableLed(true);
+
 
         shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -404,6 +407,8 @@ public class Auto11 extends OpMode {
                 telemetry.addData("Status", "Moving away from beacon...");
                 break;
             }
+
+
             default: {//Hopefully this only runs when program ends
                 allStop();
                 telemetry.addData("Status", "Switch is in default. Waiting for autonomous to end...");
