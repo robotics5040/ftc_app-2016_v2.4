@@ -19,7 +19,7 @@ public class CompetitionOmnibot2 extends OpMode {
     DcMotor shooter;
     //program variables
     int controlMode = 1, sweep = 0, shooterResetPos, sweeperResetPos;
-    boolean shoot = false, reset = false, motorReset = false, aPressed = false;
+    boolean shoot = false, reset = false, motorReset = false, aPressed = false, manualRest = false;
     //gyro thingies
     long segmentTime;
     GyroSensor gyro;
@@ -105,7 +105,8 @@ public class CompetitionOmnibot2 extends OpMode {
             ry *= -.75;
             lx *= .75;
             ly *= .75;
-        }//                  direction                               rotation
+        }
+        //                  direction                               rotation
         //average of the joystick inputs + rotation
         frontLeft.setPower(((-ry - rx)/2) * .75 + (-.25 * lx));
         backLeft.setPower(((-ry + rx)/2) * .75 + (-.25 * lx));
@@ -155,6 +156,9 @@ public class CompetitionOmnibot2 extends OpMode {
         telemetry.addData("Loop", "No loop");
         telemetry.addData("Busy T/F",shooter.isBusy());
         telemetry.addData("A pressed", gamepad2.a);
+        telemetry.addData("Manual Reset", manualRest);
+        telemetry.addData("Output of right Stick", gamepad2.right_stick_y);
+        telemetry.addData("Output of left bumper", gamepad2.left_bumper);
         if (sweeper.getCurrentPosition() % 270 >= 90 + sweeperResetPos && sweep == 0)
             sweeper.setPower(.15);
         else if (sweep == 0)
@@ -188,18 +192,29 @@ public class CompetitionOmnibot2 extends OpMode {
         //Manual fire
         if (gamepad2.left_bumper)
         {
-            if (gamepad2.right_stick_y < -.1 && gamepad2.right_stick_y > .1)
-                shooter.setPower(gamepad2.right_stick_y);
-            else
-                shooter.setPower(0);
-            if (gamepad2.y)
-            {
-                shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                shooterResetPos = 0;
-                shooter.setTargetPosition(0);
+            //
+            if ((gamepad2.right_stick_y < -.1 || gamepad2.right_stick_y > .1) && gamepad2.left_bumper) {
+                //shooter.setPower(gamepad2.right_stick_y);
+                shooter.setPower(.6);
+                manualRest = true;
             }
+
+//                if (gamepad2.y)
+//            {
+//                shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//                shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//                shooterResetPos = 0;
+//                shooter.setTargetPosition(0);
+//            }
         }
+        else {
+            shooter.setPower(0);
+            shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            shooterResetPos = 0;
+            shooter.setTargetPosition(0);
+        }
+
         if (motorReset) {
             motorReset = false;
             shooter.setPower(0);

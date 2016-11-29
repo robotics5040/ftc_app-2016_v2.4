@@ -47,6 +47,7 @@ public class Auto7 extends OpMode {
     ColorSensor line;
     UltrasonicSensor sonar;
     Servo pusher;
+    String loopNumber;
     boolean lineUsed = false;
 
     public static final String TAG = "Vuforia Sample";
@@ -171,11 +172,11 @@ public class Auto7 extends OpMode {
                 shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 shooterStartPos = shooter.getCurrentPosition();
-                shooter.setTargetPosition(1060);
+                shooter.setTargetPosition(-1440);
                 break;
             }
             case 5: {//shoot
-                if (shoot()) {
+                if (!shoot()) {
                     control = 6;
                     segmentTime = time;
                 }
@@ -347,15 +348,25 @@ public class Auto7 extends OpMode {
 
     public boolean shoot() //Waiting for launcher to be built, no code implemented
     {
-        if (shooter.getCurrentPosition() < 540)
+        boolean returnstatement = false;
+
+        if (shooter.getCurrentPosition() > -720){
             shooter.setPower(1);
-        else if (shooter.getCurrentPosition() >= 540 && shooter.getCurrentPosition() < shooter.getCurrentPosition())
-            shooter.setPower(.5);
-        else if (shooter.getCurrentPosition() >= shooter.getTargetPosition()) {
-            shooter.setPower(0);
-            return true;
+            loopNumber = "If statement";
+            returnstatement = true;
         }
-        return false;
+
+        else if (shooter.getCurrentPosition() <= -720 && shooter.getCurrentPosition() > shooter.getTargetPosition()) {
+            shooter.setPower(.5);
+            loopNumber = "Else if statement 1";
+            returnstatement = true;
+        }
+        else if (shooter.getCurrentPosition() <= shooter.getTargetPosition()) {
+            shooter.setPower(0);
+            loopNumber = "Else if statement 2";
+            returnstatement = false;
+        }
+        return returnstatement;
     }
 
     public void scan(VuforiaTrackable t) //for t, use allTrackables.get(). 0 is Wheels, 1 is Tools, 2 is Legos, 3 is Gears

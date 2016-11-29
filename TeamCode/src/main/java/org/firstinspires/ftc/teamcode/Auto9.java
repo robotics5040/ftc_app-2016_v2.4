@@ -191,16 +191,16 @@ public class Auto9 extends OpMode {
             }
             case SPIN: {//turns to knock off cap ball
                 if (navigateTime(135, .6, 2500, heading)) {
-                    control = RobotSteps.PARK;
+                    control = RobotSteps.ALL_DONE;
                     segmentTime = time;
                 }
                 break;
             }
-            case PARK: {//park on center
+            /*case PARK: {//park on center
                 if (navigateTime(270, .5, 2500, heading))
                     control = RobotSteps.ALL_DONE;
                 break;
-            }
+            }*/
             default: {//Hopefully this only runs when program ends
                 allStop();
                 telemetry.addData("Status", "Switch is in default. Waiting for autonomous to end...");
