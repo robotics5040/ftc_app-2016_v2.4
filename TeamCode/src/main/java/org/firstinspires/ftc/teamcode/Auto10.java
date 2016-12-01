@@ -180,7 +180,7 @@ public class Auto10 extends OpMode {
                 shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);//changed ruhn using encoder to run to position
                 //shooterStartPos = shooter.getCurrentPosition();
                 shooterStartPos = 0;
-                shooter.setTargetPosition(-1440);
+                shooter.setTargetPosition(-1340);
                 break;
             }
             case SHOOT: {//shoot
@@ -192,7 +192,7 @@ public class Auto10 extends OpMode {
             }
             case SWEEPER_MOVE_BACKWARD: {//swpr.mov -> < var(-.5)
                 sweeper.setPower(.7);
-                if (segmentTime + 1000 < time) {
+                if (segmentTime + 2000 < time) {
                     sweeper.setPower(0);
                     segmentTime = time;
                     control = RobotSteps.SWEEPER_MOVE_FORWARD;
@@ -208,7 +208,7 @@ public class Auto10 extends OpMode {
                     shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
                     sweeper.setPower(0);
-                    shooter.setTargetPosition(-1440);
+                    shooter.setTargetPosition(-1340);
                 }
                 break;
 

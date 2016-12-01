@@ -128,7 +128,7 @@ public class CompetitionOmnibot2 extends OpMode {
         //if (!gamepad2.a)//stops program from looping more than once, on shot per one button press
         //    aPressed = true;
         if (gamepad2.a && sweep == 0 && aPressed && shoot == false) {
-            shooter.setTargetPosition(-120 0 + shootCount*-1440);
+            shooter.setTargetPosition(-1200 + shootCount*-1440);
             shootCount++;
 
             shoot = true;
@@ -231,28 +231,22 @@ public class CompetitionOmnibot2 extends OpMode {
             degrees -= 360;
     }
 
-    public boolean shoot() //Autonomous code
+    public boolean shoot() //Autonomous code modified for teleop
     {
-        boolean returnstatement = false;
-
-        /*if (shooter.getCurrentPosition() > -720 + shootCount*-1440){
-            shooter.setPower(1);
-            loopNumber = "If statement";
-            returnstatement = true;
-        }*/
+        boolean returnStatement = false;
 
         if (shooter.getCurrentPosition() > shooter.getTargetPosition()) {
             shooter.setPower(.2);
-            loopNumber = "Else if statement 1";
-            returnstatement = true;
+            loopNumber = "If statement";
+            returnStatement = true;
         }
         else if (shooter.getCurrentPosition() <= shooter.getTargetPosition()) {
             shooter.setPower(0);
             aPressed = true;
-            loopNumber = "Else if statement 2";
-            returnstatement = false;
+            loopNumber = "Else if statement ";
+            returnStatement = false;
         }
-        return returnstatement;
+        return returnStatement;
     }
 }
 //test test test

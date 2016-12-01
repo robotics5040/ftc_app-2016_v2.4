@@ -165,7 +165,7 @@ public class Auto15 extends OpMode {
                 break;
             }
             case MOVE_TO_SHOOT: {//move into position to shoot (timed move)
-                if (navigateTime(180, .6, 1400, heading))
+                if (navigateTime(180, .6, 1300, heading))
                     control = RobotSteps.INIT_SHOOT;
                 telemetry.addData("Status", "Moving for 1 seconds...");
                 break;
@@ -177,7 +177,7 @@ public class Auto15 extends OpMode {
                 shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);//changed ruhn using encoder to run to position
                 //shooterStartPos = shooter.getCurrentPosition();
                 shooterStartPos = 0;
-                shooter.setTargetPosition(-1440);
+                shooter.setTargetPosition(-1340);
                 break;
             }
             case SHOOT: {//shoot
@@ -189,7 +189,7 @@ public class Auto15 extends OpMode {
             }
             case SWEEPER_MOVE_BACKWARD: {//swpr.mov -> < var(-.5)
                 sweeper.setPower(.7);
-                if (segmentTime + 1000 < time) {
+                if (segmentTime + 2000 < time) {
                     sweeper.setPower(0);
                     segmentTime = time;
                     control = RobotSteps.SWEEPER_MOVE_FORWARD;
@@ -205,7 +205,7 @@ public class Auto15 extends OpMode {
                     shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
                     sweeper.setPower(0);
-                    shooter.setTargetPosition(-1440);
+                    shooter.setTargetPosition(-1340);
                 }
                 break;
 
@@ -218,8 +218,8 @@ public class Auto15 extends OpMode {
                 break;
 
             }
-            case RETURN: {//move forward to knock off cap ball
-                if (navigateTime(0, .6, 1400, heading))
+            case RETURN: {//Move back to start position
+                if (navigateTime(0, .5, 1300, heading))
                     control = RobotSteps.ALL_DONE;
                 break;
             }
