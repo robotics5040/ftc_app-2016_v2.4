@@ -188,8 +188,8 @@ public class Auto9 extends OpMode {
                 break;
             }
             case SWEEPER_MOVE_BACKWARD: {//swpr.mov -> < var(-.5)
-                sweeper.setPower(.7);
-                if (segmentTime + 2000 < time) {
+                sweeper.setPower(-.5);
+                if (segmentTime + 70 < time) {
                     sweeper.setPower(0);
                     segmentTime = time;
                     control = RobotSteps.SWEEPER_MOVE_FORWARD;
@@ -197,8 +197,8 @@ public class Auto9 extends OpMode {
                 break;
             }
             case SWEEPER_MOVE_FORWARD: {//swpr.mov -> > var(.7) -- pos+
-                sweeper.setPower(-.7);
-                if (segmentTime + 200 < time)
+                sweeper.setPower(.7);
+                if (segmentTime + 800 < time)
                 {
                     control = RobotSteps.SHOOT_DOS;
                     shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
