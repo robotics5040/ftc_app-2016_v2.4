@@ -198,7 +198,7 @@ public class Auto13 extends OpMode {
             }
             case SWEEPER_MOVE_FORWARD: {//swpr.mov -> > var(.7) -- pos+
                 sweeper.setPower(.7);
-                if (segmentTime + 800 < time)
+                if (segmentTime + 2000 < time)
                 {
                     control = RobotSteps.SHOOT_DOS;
                     shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
