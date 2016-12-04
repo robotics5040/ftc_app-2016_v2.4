@@ -127,7 +127,7 @@ public class CompetitionOmnibot2 extends OpMode {
         }
         //if (!gamepad2.a)//stops program from looping more than once, on shot per one button press
         //    aPressed = true;
-        if (gamepad2.a && sweep == 0 && aPressed && shoot == false) {
+        if (gamepad2.a && sweep == 0 && aPressed && shoot == false && manualRest == false) {
             shooter.setTargetPosition(-1200 + shootCount*-1440);
             shootCount++;
 
@@ -199,20 +199,21 @@ public class CompetitionOmnibot2 extends OpMode {
         //Manual fire
         if (gamepad2.left_bumper)
         {
-            //
-            if ((gamepad2.right_stick_y < -.1 || gamepad2.right_stick_y > .1) && gamepad2.left_bumper) {
-                //shooter.setPower(gamepad2.right_stick_y);
-                shooter.setPower(.6);
+            if (gamepad2.right_stick_y < -.1 || gamepad2.right_stick_y > .1) {
+                shooter.setPower(.5);
                 manualRest = true;
+            } else {
+                manualRest = false;
+                shooter.setPower(0);
             }
 
-//                if (gamepad2.y)
-//            {
-//                shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//                shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//                shooterResetPos = 0;
-//                shooter.setTargetPosition(0);
-//            }
+            if (gamepad2.y)
+            {
+                shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                shooterResetPos = 0;
+                shooter.setTargetPosition(0);
+            }
         }
 
         if (motorReset) {

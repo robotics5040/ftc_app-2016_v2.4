@@ -199,7 +199,7 @@ public class Auto16 extends OpMode {
             }
             case SWEEPER_MOVE_FORWARD: {//swpr.mov -> > var(.7) -- pos+
                 sweeper.setPower(.7);
-                if (segmentTime + 2000 < time)
+                if (segmentTime + 1300 < time)
                 {
                     control = RobotSteps.SHOOT_DOS;
                     shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -207,7 +207,10 @@ public class Auto16 extends OpMode {
 
                     sweeper.setPower(0);
                     shooter.setTargetPosition(-1340);
+                    segmentTime = time;
+
                 }
+
                 break;
 
             }
@@ -219,11 +222,11 @@ public class Auto16 extends OpMode {
                 break;
 
             }
-            case RETURN: {//move forward to knock off cap ball
+            /*case RETURN: {//move forward to knock off cap ball
                 if (navigateTime(0, .6, 1400, heading))
                     control = RobotSteps.ALL_DONE;
                 break;
-            }
+            }*/
             /*case PARK: {//park on center
                 if (navigateTime(270, .5, 2500, heading))
                     control = RobotSteps.ALL_DONE;

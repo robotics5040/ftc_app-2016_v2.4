@@ -198,7 +198,7 @@ public class Auto15 extends OpMode {
             }
             case SWEEPER_MOVE_FORWARD: {//swpr.mov -> > var(.7) -- pos+
                 sweeper.setPower(.7);
-                if (segmentTime + 2000 < time)
+                if (segmentTime + 1300 < time)
                 {
                     control = RobotSteps.SHOOT_DOS;
                     shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -218,11 +218,11 @@ public class Auto15 extends OpMode {
                 break;
 
             }
-            case RETURN: {//Move back to start position
+           /* case RETURN: {//Move back to start position
                 if (navigateTime(0, .5, 1300, heading))
                     control = RobotSteps.ALL_DONE;
                 break;
-            }
+            }*/
             /*case PARK: {//park on center
                 if (navigateTime(270, .5, 2500, heading))
                     control = RobotSteps.ALL_DONE;
