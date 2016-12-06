@@ -153,7 +153,7 @@ public class Auto16 extends OpMode {
                 break;
             }
             case DELAY: {//Initial delay, set control to 2 to skip delay
-                if (segmentTime + 5000 < time) //set to 3 seconds for testing
+                if (segmentTime + 15000 < time) //set to 3 seconds for testing
                     control = RobotSteps.INIT_MOVE;
                 telemetry.addData("Status", "Waiting to start...");
                 break;

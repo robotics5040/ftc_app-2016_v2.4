@@ -174,10 +174,9 @@ public class Auto9 extends OpMode {
                 allStop();
                 control = RobotSteps.SHOOT;
                 shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);//changed ruhn using encoder to run to position
-                //shooterStartPos = shooter.getCurrentPosition();
-                shooterStartPos = 0;
+                shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 shooter.setTargetPosition(-1340);
+                shooterStartPos = 0;
                 break;
             }
             case SHOOT: {//shoot
@@ -198,7 +197,7 @@ public class Auto9 extends OpMode {
             }
             case SWEEPER_MOVE_FORWARD: {//swpr.mov -> > var(.7) -- pos+
                 sweeper.setPower(.7);
-                if (segmentTime + 1300 < time)
+                if (segmentTime + 1500 < time)
                 {
                     control = RobotSteps.SHOOT_DOS;
                     shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -310,9 +309,9 @@ public class Auto9 extends OpMode {
 
     public void navigateBlind(int deg, double power, int h)
     {
-        double x = Math.cos(deg * (Math.PI/180.0)), y = Math.sin(deg * (Math.PI/180.0));
+        double x = Math.cos(deg * (Math.PI/180.0)), y = Math.sin(deg * (Math.PI/180.0)); //angle calculation
 
-        double correction = correct(h);
+        double correction = correct(h); //correct deviation
         frontLeft.setPower((-(-y - x)/2) * power + correction);
         backLeft.setPower(((-y + x)/2) * power + correction);
         frontRight.setPower(((y - x)/2) * power + correction);
@@ -361,11 +360,11 @@ public class Auto9 extends OpMode {
         return transformationMatrix.formatAsTransform();
     }
 
-    public double correct(int h)
+    public double correct(int h) //Corrects deviation of robot angle while moving
     {
-        if (h > startDegrees + 10)
+        if (h > startDegrees + 4)
             return .1;
-        if (h < startDegrees - 10)
+        if (h < startDegrees - 4)
             return -.1;
         return 0;
     }
