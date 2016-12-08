@@ -31,7 +31,7 @@ import java.util.List;
  */
 @Autonomous (name = "Red pos 1: Shoot 1/Press 1", group = "Red Autonomous")
 public class RedAutoBeacons1 extends OpMode {
-    public final int VERSION = 2;
+    public final int VERSION = 3;
 
     public final int NUM_BEACONS = 2;
     int target, startDegrees, targetDegrees, shooterStartPos, sideOfLine;
@@ -181,7 +181,7 @@ public class RedAutoBeacons1 extends OpMode {
                 allStop();
                 shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                shooter.setTargetPosition(1340);
+                shooter.setTargetPosition(-1340);
                 shooterStartPos = 0;
                 control = RobotSteps.SHOOT;
                 telemetry.addData("Status", "Setting up shooter...");
@@ -205,7 +205,7 @@ public class RedAutoBeacons1 extends OpMode {
             }
             case MOVE_TO_BEACON: {
                 scan(allTrackables.get(3));
-                navigateBlind(135, .4, heading);
+                navigateBlind(135, .35, heading);
                 if ((sonar.getUltrasonicLevel() > 0 && sonar.getUltrasonicLevel() < 45) || line.alpha() > 20) {
                     segmentTime = time;
                     control = RobotSteps.INIT_ALIGN;
@@ -231,8 +231,10 @@ public class RedAutoBeacons1 extends OpMode {
             }
             case ALIGN: {
                 scan(allTrackables.get(3));
-                if (sideOfLine == 0)
+                if (sideOfLine == 0) {
                     control = RobotSteps.INIT_MOVE_TO_PUSH_POS;
+                    segmentTime = time;
+                }
                 else {
                     if (sideOfLine == -1) {
                         navigateBlind(180, .3, heading);
@@ -253,8 +255,20 @@ public class RedAutoBeacons1 extends OpMode {
                 break;
             }
             case INIT_MOVE_TO_PUSH_POS: {
+                allStop();
                 scan(allTrackables.get(3));
-
+                if (segmentTime + 500 < time)
+                    control = RobotSteps.MOVE_TO_PUSH_POS;
+                break;
+            }
+            case MOVE_TO_PUSH_POS: {
+                scan(allTrackables.get(3));
+                navigateBlind(90, .4, heading);
+                if (sonar.getUltrasonicLevel() > 0 && sonar.getUltrasonicLevel() < 20) {
+                    allStop();
+                    control = RobotSteps.INIT_REALIGN;
+                }
+                break;
             }
             default: {//Hopefully this only runs when program ends
                 allStop();
