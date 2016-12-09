@@ -30,7 +30,7 @@ import java.util.List;
  */
 @Autonomous (name = "Blue pos 1: Shoot 1/Press 2", group = "Red Autonomous")
 public class BlueAutoBeacons1 extends OpMode {
-    public final int VERSION = 1;
+    public final int VERSION = 2;
 
     public final int NUM_BEACONS = 2;
     int target, startDegrees, targetDegrees, shooterStartPos, sideOfLine, beaconState, target2 = 0, pushCheck = 0, rotateDegrees = 0;
@@ -227,7 +227,7 @@ public class BlueAutoBeacons1 extends OpMode {
                 boolean isVisible = scan(allTrackables.get(target2));
                 if (!isVisible)
                     navigateBlind(45, .35, heading);
-                if (isVisible && posx > beaconPos1[0]) {
+                if (isVisible && posy > beaconPos1[0]) {
                     navigateBlind(90, .3, heading);
                 }
                 if ((sonar.getUltrasonicLevel() > 0 && sonar.getUltrasonicLevel() < 45) || line.alpha() > 20) {
@@ -249,9 +249,9 @@ public class BlueAutoBeacons1 extends OpMode {
                     scan(allTrackables.get(3));
                     if (line.alpha() > 10)
                         sideOfLine = 0;//on target
-                    else if (posx < y)
+                    else if (posy < y)
                         sideOfLine = -1;//left of target
-                    else if (posx > y)
+                    else if (posy > y)
                         sideOfLine = 1;//right of target
                     control = RobotSteps.ALIGN;
                     segmentTime = time;
@@ -273,7 +273,7 @@ public class BlueAutoBeacons1 extends OpMode {
                 else if (segmentTime + 1500 > time){
                     if (sideOfLine == -1) {
                         navigateBlind(180, .3, heading);
-                        if (posx - 20 > y) {
+                        if (posy - 20 > y) {
                             sideOfLine = 1;
                             segmentTime = time;
                         }
@@ -282,7 +282,7 @@ public class BlueAutoBeacons1 extends OpMode {
                     }
                     if (sideOfLine == 1) {
                         navigateBlind(0, .3, heading);
-                        if (posx + 20 < y) {
+                        if (posy + 20 < y) {
                             sideOfLine = -1;
                             segmentTime = time;
                         }
@@ -331,9 +331,9 @@ public class BlueAutoBeacons1 extends OpMode {
                     scan(allTrackables.get(3));
                     if (line.alpha() > 10)
                         sideOfLine = 0;//on target
-                    else if (posx < y)
+                    else if (posy > y)
                         sideOfLine = -1;//left of target
-                    else if (posx > y)
+                    else if (posy < y)
                         sideOfLine = 1;//right of target
                     control = RobotSteps.REALIGN;
                     segmentTime = time;
@@ -355,14 +355,14 @@ public class BlueAutoBeacons1 extends OpMode {
                 else {
                     if (sideOfLine == -1) {
                         navigateBlind(180, .3, heading);
-                        if (posx - 20 > y)
+                        if (posy - 20 < y)
                             sideOfLine = 1;
                         if (line.alpha() > 20)
                             sideOfLine = 0;
                     }
                     if (sideOfLine == 1) {
                         navigateBlind(0, .3, heading);
-                        if (posx + 20 < y)
+                        if (posy + 20 > y)
                             sideOfLine = -1;
                         if (line.alpha() > 20)
                             sideOfLine = 0;
@@ -380,10 +380,10 @@ public class BlueAutoBeacons1 extends OpMode {
             case SCAN: {
                 if (color.blue() < color.red()) {
                     pusher.setPosition(0);
-                    beaconState = -1;
+                    beaconState = 1;
                 } else if (color.blue() > color.red()) {
                     pusher.setPosition(1);
-                    beaconState = 1;
+                    beaconState = -1;
                 } else {
                     pusher.setPosition(.5);
                     beaconState = 0;
@@ -422,12 +422,12 @@ public class BlueAutoBeacons1 extends OpMode {
             case PUSH: {
                 if (segmentTime + 500 < time)
                     control = RobotSteps.REVERSE;
-                if (beaconState == 1) {
+                if (beaconState == -1) {
                     frontLeft.setPower(.1);
                     frontRight.setPower(.1);
                     backLeft.setPower(-.4);
                     backRight.setPower(-.4);
-                } else if (beaconState == -1) {
+                } else if (beaconState == 1) {
                     frontLeft.setPower(.4);
                     frontRight.setPower(.4);
                     backLeft.setPower(-.1);
@@ -467,7 +467,7 @@ public class BlueAutoBeacons1 extends OpMode {
                 boolean isVisible = scan(allTrackables.get(target2));
                 navigateBlind(0, .35, heading);
 
-                if ((isVisible && posx > 1170) || (line.alpha() > 10 && segmentTime + 1500 < time)) {
+                if ((isVisible && posy > 1170) || (line.alpha() > 10 && segmentTime + 1500 < time)) {
                     control = RobotSteps.INIT_ALIGN;
                     allStop();
                 }
@@ -500,7 +500,7 @@ public class BlueAutoBeacons1 extends OpMode {
         if (lastLocation != null) {//position output
             VectorF trans = lastLocation.getTranslation();
             Orientation rot = Orientation.getOrientation(lastLocation, AxesReference.EXTRINSIC, AxesOrder.XYZ, AngleUnit.RADIANS);
-            posx = trans.get(0);
+            posy = trans.get(0);
             posy = trans.get(1);
 
             robotBearing = rot.thirdAngle;
@@ -577,11 +577,7 @@ public class BlueAutoBeacons1 extends OpMode {
 
     public double correct(int h)
     {
-        if (h > startDegrees + 5)
-            return .08;
-        if (h < startDegrees - 5)
-            return -.08;
-        return 0;
+        return (h * .01)/2;
     }
 
     public boolean shoot()
