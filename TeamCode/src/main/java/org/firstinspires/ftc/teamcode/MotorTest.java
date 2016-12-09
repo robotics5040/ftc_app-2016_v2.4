@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpModeRegistrar;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -9,7 +10,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 /**
  * Created by bense on 9/14/2016.
  */
-@TeleOp(name = "Motor Tet", group = "Tests")
+@TeleOp(name = "Motor Test", group = "Tests")
+@Disabled
 public class MotorTest extends OpMode {
     DcMotor motor1;
     DcMotor motor2;

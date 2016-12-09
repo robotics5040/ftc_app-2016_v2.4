@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -9,6 +10,7 @@ import com.qualcomm.robotcore.hardware.GyroSensor;
  * Created by bense on 11/1/2016.
  */
 @TeleOp(name = "CompOmnibot3", group = "Competition")
+@Disabled
 public class CompetitionOmnibot3 extends OpMode {
     //motor variables
     DcMotor frontLeft;
