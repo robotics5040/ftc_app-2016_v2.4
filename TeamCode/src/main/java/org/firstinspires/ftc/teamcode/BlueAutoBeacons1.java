@@ -30,7 +30,7 @@ import java.util.List;
  */
 @Autonomous (name = "Blue pos 1: Shoot 1/Press 2", group = "Red Autonomous")
 public class BlueAutoBeacons1 extends OpMode {
-    public final int VERSION = 2;
+    public final int VERSION = 3;
 
     public final int NUM_BEACONS = 2;
     int target, startDegrees, targetDegrees, shooterStartPos, sideOfLine, beaconState, target2 = 0, pushCheck = 0, rotateDegrees = 0;
@@ -241,17 +241,17 @@ public class BlueAutoBeacons1 extends OpMode {
             case INIT_ALIGN: {
                 boolean isVisible = scan(allTrackables.get(target2));
                 int y = 0;
-                if (target == 3)
+                if (target2 == 0)
                     y = beaconPos1[1];
-                if (target == 1)
+                if (target2 == 2)
                     y = beaconPos2[1];
                 if (realign(heading) && isVisible) {
                     scan(allTrackables.get(3));
                     if (line.alpha() > 10)
                         sideOfLine = 0;//on target
-                    else if (posy < y)
-                        sideOfLine = -1;//left of target
                     else if (posy > y)
+                        sideOfLine = -1;//left of target
+                    else if (posy < y)
                         sideOfLine = 1;//right of target
                     control = RobotSteps.ALIGN;
                     segmentTime = time;
@@ -262,19 +262,19 @@ public class BlueAutoBeacons1 extends OpMode {
             case ALIGN: {
                 scan(allTrackables.get(target2));
                 int y = 0;
-                if (target == 3)
+                if (target2 == 0)
                     y = beaconPos1[1];
-                if (target == 1)
+                if (target2 == 2)
                     y = beaconPos2[1];
                 if (sideOfLine == 0) {
                     control = RobotSteps.INIT_MOVE_TO_PUSH_POS;
                     segmentTime = time;
                 }
-                else if (segmentTime + 1500 > time){
+                //else if (segmentTime + 1500 > time){
                     if (sideOfLine == -1) {
                         navigateBlind(180, .3, heading);
                         if (posy - 20 > y) {
-                            sideOfLine = 1;
+                            sideOfLine = -1;
                             segmentTime = time;
                         }
                         if (line.alpha() > 20)
@@ -283,13 +283,13 @@ public class BlueAutoBeacons1 extends OpMode {
                     if (sideOfLine == 1) {
                         navigateBlind(0, .3, heading);
                         if (posy + 20 < y) {
-                            sideOfLine = -1;
+                            sideOfLine = 1;
                             segmentTime = time;
                         }
                         if (line.alpha() > 20)
                             sideOfLine = 0;
-                    }
-                } else if (segmentTime + 1500 < time){
+                    //}
+                } /*else if (segmentTime + 1500 < time){
                     if (sideOfLine == -1) {
                         navigateBlind(180, -.3, heading);
                         if (line.alpha() > 20)
@@ -300,7 +300,7 @@ public class BlueAutoBeacons1 extends OpMode {
                         if (line.alpha() > 20)
                             sideOfLine = 0;
                     }
-                }
+                }*/
                 telemetry.addData("Status", "Finding line...");
                 break;
             }
@@ -323,9 +323,9 @@ public class BlueAutoBeacons1 extends OpMode {
             case  INIT_REALIGN: {
                 boolean isVisible = scan(allTrackables.get(target2));
                 int y = 0;
-                if (target == 3)
+                if (target2 == 0)
                     y = beaconPos1[1];
-                if (target == 1)
+                if (target2 == 2)
                     y = beaconPos2[1];
                 if (isVisible && realign(heading)) {
                     scan(allTrackables.get(3));
@@ -344,26 +344,25 @@ public class BlueAutoBeacons1 extends OpMode {
             case REALIGN: {
                 scan(allTrackables.get(target2));
                 int y = 0;
-                if (target == 3)
+                if (target2 == 0)
                     y = beaconPos1[1];
-                if (target == 1)
+                if (target2 == 2)
                     y = beaconPos2[1];
                 if (sideOfLine == 0) {
                     control = RobotSteps.INIT_SCAN;
                     segmentTime = time;
-                }
-                else {
+                } else {
                     if (sideOfLine == -1) {
                         navigateBlind(180, .3, heading);
                         if (posy - 20 < y)
-                            sideOfLine = 1;
+                            sideOfLine = -1;
                         if (line.alpha() > 20)
                             sideOfLine = 0;
                     }
                     if (sideOfLine == 1) {
                         navigateBlind(0, .3, heading);
                         if (posy + 20 > y)
-                            sideOfLine = -1;
+                            sideOfLine = 1;
                         if (line.alpha() > 20)
                             sideOfLine = 0;
                     }
@@ -379,11 +378,11 @@ public class BlueAutoBeacons1 extends OpMode {
             }
             case SCAN: {
                 if (color.blue() < color.red()) {
-                    pusher.setPosition(0);
-                    beaconState = 1;
-                } else if (color.blue() > color.red()) {
                     pusher.setPosition(1);
                     beaconState = -1;
+                } else if (color.blue() > color.red()) {
+                    pusher.setPosition(0);
+                    beaconState = 1;
                 } else {
                     pusher.setPosition(.5);
                     beaconState = 0;
@@ -397,10 +396,10 @@ public class BlueAutoBeacons1 extends OpMode {
                 if (segmentTime + 500 < time) {
                     control = RobotSteps.PUSH;
                     segmentTime = time;
-                    if (sonar.getUltrasonicLevel() > 20)
+                    /*if (sonar.getUltrasonicLevel() > 20)
                         pushCheck = 1;
                     if (sonar.getUltrasonicLevel() < 15)
-                        pushCheck = -1;
+                        pushCheck = -1;*/
                 }
                 break;
             }
@@ -422,12 +421,12 @@ public class BlueAutoBeacons1 extends OpMode {
             case PUSH: {
                 if (segmentTime + 500 < time)
                     control = RobotSteps.REVERSE;
-                if (beaconState == -1) {
+                if (beaconState == 1) {
                     frontLeft.setPower(.1);
                     frontRight.setPower(.1);
                     backLeft.setPower(-.4);
                     backRight.setPower(-.4);
-                } else if (beaconState == 1) {
+                } else if (beaconState == -1) {
                     frontLeft.setPower(.4);
                     frontRight.setPower(.4);
                     backLeft.setPower(-.1);
@@ -497,6 +496,9 @@ public class BlueAutoBeacons1 extends OpMode {
         else
             telemetry.addData("Color", "Unknown");
         telemetry.addData("Target2", target2);
+        telemetry.addData("", "");
+        telemetry.addData("Beacon 1", beaconPos1[0] + ", " + beaconPos1[1]);
+        telemetry.addData("Beacon 2", beaconPos2[0] + ", " + beaconPos2[1]);
         if (lastLocation != null) {//position output
             VectorF trans = lastLocation.getTranslation();
             Orientation rot = Orientation.getOrientation(lastLocation, AxesReference.EXTRINSIC, AxesOrder.XYZ, AngleUnit.RADIANS);
@@ -617,13 +619,13 @@ public class BlueAutoBeacons1 extends OpMode {
 
     public boolean realign (int h)
     {
-        if (h + 4 < startDegrees) {
+        if (h + 5 < startDegrees) {
             frontRight.setPower(-.08);
             frontLeft.setPower(-.08);
             backRight.setPower(-.08);
             backLeft.setPower(-.08);
             segmentTime = time;
-        } else if (h - 4 > startDegrees) {
+        } else if (h - 5 > startDegrees) {
             frontRight.setPower(.08);
             frontLeft.setPower(.08);
             backRight.setPower(.08);
