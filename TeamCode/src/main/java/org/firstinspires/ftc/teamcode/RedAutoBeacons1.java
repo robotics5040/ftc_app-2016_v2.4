@@ -31,7 +31,7 @@ import java.util.List;
  */
 @Autonomous (name = "Red pos 1: Shoot 1/Press 2", group = "Red Autonomous")
 public class RedAutoBeacons1 extends OpMode {
-    public final int VERSION = 8;
+    public final int VERSION = 9;
 
     public final int NUM_BEACONS = 2;
     int target, startDegrees, targetDegrees, shooterStartPos, sideOfLine, beaconState, target2 = 3, pushCheck = 0;
@@ -326,6 +326,7 @@ public class RedAutoBeacons1 extends OpMode {
                     segmentTime = time;
                 }
                 else {
+                    allStop();
                     if (sideOfLine == -1) {
                         navigateBlind(180, .3, heading);
                         if (posx - 20 > x)
