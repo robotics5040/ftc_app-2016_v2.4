@@ -31,7 +31,7 @@ import java.util.List;
  */
 @Autonomous (name = "Red pos 1: Shoot 1/Press 2", group = "Red Autonomous")
 public class RedAutoBeacons1 extends OpMode {
-    public final int VERSION = 6;
+    public final int VERSION = 7;
 
     public final int NUM_BEACONS = 2;
     int target, startDegrees, targetDegrees, shooterStartPos, sideOfLine, beaconState, target2 = 3, pushCheck = 0;
@@ -598,13 +598,13 @@ public class RedAutoBeacons1 extends OpMode {
 
     public boolean realign (int h)
     {
-        if (h + 5 < startDegrees) {
+        if (h + 6 < startDegrees) {
             frontRight.setPower(-.08);
             frontLeft.setPower(-.08);
             backRight.setPower(-.08);
             backLeft.setPower(-.08);
             segmentTime = time;
-        } else if (h - 5 > startDegrees) {
+        } else if (h - 6 > startDegrees) {
             frontRight.setPower(.08);
             frontLeft.setPower(.08);
             backRight.setPower(.08);

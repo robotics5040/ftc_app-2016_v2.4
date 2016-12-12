@@ -30,7 +30,7 @@ import java.util.List;
  */
 @Autonomous (name = "Blue pos 1: Shoot 1/Press 2", group = "Red Autonomous")
 public class BlueAutoBeacons1 extends OpMode {
-    public final int VERSION = 3;
+    public final int VERSION = 4;
 
     public final int NUM_BEACONS = 2;
     int target, startDegrees, targetDegrees, shooterStartPos, sideOfLine, beaconState, target2 = 0, pushCheck = 0, rotateDegrees = 0;
@@ -270,37 +270,24 @@ public class BlueAutoBeacons1 extends OpMode {
                     control = RobotSteps.INIT_MOVE_TO_PUSH_POS;
                     segmentTime = time;
                 }
-                //else if (segmentTime + 1500 > time){
-                    if (sideOfLine == -1) {
-                        navigateBlind(180, .3, heading);
-                        if (posy - 20 > y) {
-                            sideOfLine = -1;
-                            segmentTime = time;
-                        }
-                        if (line.alpha() > 20)
-                            sideOfLine = 0;
+                if (sideOfLine == -1) {
+                    navigateBlind(180, .3, heading);
+                    if (posy - 20 > y) {
+                        sideOfLine = -1;
+                        segmentTime = time;
                     }
-                    if (sideOfLine == 1) {
-                        navigateBlind(0, .3, heading);
-                        if (posy + 20 < y) {
-                            sideOfLine = 1;
-                            segmentTime = time;
-                        }
-                        if (line.alpha() > 20)
-                            sideOfLine = 0;
-                    //}
-                } /*else if (segmentTime + 1500 < time){
-                    if (sideOfLine == -1) {
-                        navigateBlind(180, -.3, heading);
-                        if (line.alpha() > 20)
-                            sideOfLine = 0;
+                    if (line.alpha() > 20)
+                        sideOfLine = 0;
+                }
+                if (sideOfLine == 1) {
+                    navigateBlind(0, .3, heading);
+                    if (posy + 20 < y) {
+                        sideOfLine = 1;
+                        segmentTime = time;
                     }
-                    if (sideOfLine == 1) {
-                        navigateBlind(0, -.3, heading);
-                        if (line.alpha() > 20)
-                            sideOfLine = 0;
-                    }
-                }*/
+                    if (line.alpha() > 20)
+                        sideOfLine = 0;
+                }
                 telemetry.addData("Status", "Finding line...");
                 break;
             }
@@ -464,7 +451,7 @@ public class BlueAutoBeacons1 extends OpMode {
             }
             case MOVE_TO_BEACON2: {
                 boolean isVisible = scan(allTrackables.get(target2));
-                navigateBlind(0, .35, heading);
+                navigateBlind(10, .35, heading);
 
                 if ((isVisible && posy > 1170) || (line.alpha() > 10 && segmentTime + 1500 < time)) {
                     control = RobotSteps.INIT_ALIGN;
@@ -619,13 +606,13 @@ public class BlueAutoBeacons1 extends OpMode {
 
     public boolean realign (int h)
     {
-        if (h + 5 < startDegrees) {
+        if (h + 6 < startDegrees) {
             frontRight.setPower(-.08);
             frontLeft.setPower(-.08);
             backRight.setPower(-.08);
             backLeft.setPower(-.08);
             segmentTime = time;
-        } else if (h - 5 > startDegrees) {
+        } else if (h - 6 > startDegrees) {
             frontRight.setPower(.08);
             frontLeft.setPower(.08);
             backRight.setPower(.08);
