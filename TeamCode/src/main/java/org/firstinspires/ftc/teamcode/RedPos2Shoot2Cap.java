@@ -28,8 +28,8 @@ import java.util.List;
 /**
  * Created by bense on 11/11/2016.
  */
-@Autonomous(name = "Blue Pos 2: Shoot 2/Hit cap ball/Park on center", group = "Blue Autonomous2")
-public class BluePos2Shoot2Cap extends OpMode {
+@Autonomous(name = "Red Pos 2: Shoot 2/Hit cap ball/Park on center", group = "Red Autonomous2")
+public class RedPos2Shoot2Cap extends OpMode {
     int target, startDegrees, targetDegrees, shooterStartPos, rotateDegrees = 0;
     DcMotor frontLeft;
     DcMotor frontRight;
@@ -166,7 +166,7 @@ public class BluePos2Shoot2Cap extends OpMode {
                 break;
             }
             case MOVE_TO_SHOOT: {//move into position to shoot (timed move)
-                if (navigateTime(180, .6, 1400, heading))
+                if (navigateTime(180, .6, 1300, heading))
                     control = RobotSteps.INIT_SHOOT;
                 telemetry.addData("Status", "Moving for 1 seconds...");
                 break;
@@ -227,8 +227,8 @@ public class BluePos2Shoot2Cap extends OpMode {
                     control = RobotSteps.SPIN2;
                 break;
             }
-            case SPIN2: {//Turn
-                if (rotate('r', 180, heading)) {
+            /*case SPIN2: {//Turn
+                if (rotate('l', 180, heading)) {
                     control = RobotSteps.ALIGN;
                     rotateDegrees = 180;
                     allStop();
@@ -249,7 +249,7 @@ public class BluePos2Shoot2Cap extends OpMode {
                     control = RobotSteps.ALL_DONE;
                 break;
             }
-
+            */
             default: {//Hopefully this only runs when program ends
                 allStop();
                 telemetry.addData("Status", "Switch is in default. Waiting for autonomous to end...");
