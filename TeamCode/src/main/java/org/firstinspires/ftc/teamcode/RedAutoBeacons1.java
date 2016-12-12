@@ -558,10 +558,6 @@ public class RedAutoBeacons1 extends OpMode {
 
     public double correct(int h)
     {
-        //if (h > startDegrees + 5)
-        //    return .08;
-        //if (h < startDegrees - 5)
-        //    return -.08;
         return (h * .01)/2;
     }
 
