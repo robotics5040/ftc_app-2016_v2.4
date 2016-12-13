@@ -30,7 +30,7 @@ import java.util.List;
  */
 @Autonomous (name = "Blue pos 1: Shoot 1/Press 2", group = "Red Autonomous")
 public class BlueAutoBeacons1 extends OpMode {
-    public final int VERSION = 5;
+    public final int VERSION = 6;
 
     public final int NUM_BEACONS = 2;
     int target, startDegrees, targetDegrees, shooterStartPos, sideOfLine, beaconState, target2 = 0, pushCheck = 0, rotateDegrees = 0;
@@ -276,8 +276,8 @@ public class BlueAutoBeacons1 extends OpMode {
                 }
                 if (sideOfLine == -1) {
                     navigateBlind(180, .3, heading);
-                    if (posy + 50 > y) {
-                        sideOfLine = -1;
+                    if (posy + 50 < y) {
+                        sideOfLine = 1;
                         segmentTime = time;
                     }
                     if (line.alpha() > 20)
@@ -285,8 +285,8 @@ public class BlueAutoBeacons1 extends OpMode {
                 }
                 if (sideOfLine == 1) {
                     navigateBlind(0, .3, heading);
-                    if (posy - 50 < y) {
-                        sideOfLine = 1;
+                    if (posy - 50 > y) {
+                        sideOfLine = -1;
                         segmentTime = time;
                     }
                     if (line.alpha() > 20)
@@ -298,6 +298,7 @@ public class BlueAutoBeacons1 extends OpMode {
             case INIT_MOVE_TO_PUSH_POS: {
                 allStop();
                 scan(allTrackables.get(target));
+                pusher.setPosition(.5);
                 if (segmentTime + 500 < time)
                     control = RobotSteps.MOVE_TO_PUSH_POS;
                 break;
@@ -313,6 +314,7 @@ public class BlueAutoBeacons1 extends OpMode {
             }
             case  INIT_REALIGN: {
                 boolean isVisible = scan(allTrackables.get(target2));
+                pusher.setPosition(0);
                 int y = 0;
                 if (target2 == 0)
                     y = beaconPos1[1];
@@ -459,7 +461,7 @@ public class BlueAutoBeacons1 extends OpMode {
                 boolean isVisible = scan(allTrackables.get(target2));
                 navigateBlind(5, .35, heading);
 
-                if ((isVisible && posy > 1170) || (line.alpha() > 10 && segmentTime + 1500 < time)) {
+                if ((isVisible && posy > 700) || (line.alpha() > 10 && segmentTime + 1500 < time)) {
                     control = RobotSteps.INIT_ALIGN;
                     allStop();
                 }
