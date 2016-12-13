@@ -30,7 +30,7 @@ import java.util.List;
  */
 @Autonomous (name = "Blue pos 1: Shoot 1/Press 2", group = "Red Autonomous")
 public class BlueAutoBeacons1 extends OpMode {
-    public final int VERSION = 4;
+    public final int VERSION = 5;
 
     public final int NUM_BEACONS = 2;
     int target, startDegrees, targetDegrees, shooterStartPos, sideOfLine, beaconState, target2 = 0, pushCheck = 0, rotateDegrees = 0;
@@ -197,7 +197,7 @@ public class BlueAutoBeacons1 extends OpMode {
                 break;
             }
             case INIT_ROTATE: {
-
+                //Not needed, left in just in case
             }
             case ROTATE: {
                 if (rotate('r', 180, heading)) {
@@ -255,6 +255,10 @@ public class BlueAutoBeacons1 extends OpMode {
                         sideOfLine = 1;//right of target
                     control = RobotSteps.ALIGN;
                     segmentTime = time;
+                } else if (segmentTime + 1000 < time) {
+                    sideOfLine = -1;
+                    control = RobotSteps.ALIGN;
+                    segmentTime = time;
                 }
                 telemetry.addData("Status", "Realigning...");
                 break;
@@ -272,7 +276,7 @@ public class BlueAutoBeacons1 extends OpMode {
                 }
                 if (sideOfLine == -1) {
                     navigateBlind(180, .3, heading);
-                    if (posy - 20 > y) {
+                    if (posy + 50 > y) {
                         sideOfLine = -1;
                         segmentTime = time;
                     }
@@ -281,7 +285,7 @@ public class BlueAutoBeacons1 extends OpMode {
                 }
                 if (sideOfLine == 1) {
                     navigateBlind(0, .3, heading);
-                    if (posy + 20 < y) {
+                    if (posy - 50 < y) {
                         sideOfLine = 1;
                         segmentTime = time;
                     }
@@ -338,18 +342,20 @@ public class BlueAutoBeacons1 extends OpMode {
                 if (sideOfLine == 0) {
                     control = RobotSteps.INIT_SCAN;
                     segmentTime = time;
+                    allStop();
                 } else {
+                    allStop();
                     if (sideOfLine == -1) {
                         navigateBlind(180, .3, heading);
-                        if (posy - 20 < y)
-                            sideOfLine = -1;
+                        if (posy + 50 < y)
+                            sideOfLine = 1;
                         if (line.alpha() > 20)
                             sideOfLine = 0;
                     }
                     if (sideOfLine == 1) {
                         navigateBlind(0, .3, heading);
-                        if (posy + 20 > y)
-                            sideOfLine = 1;
+                        if (posy - 50 > y)
+                            sideOfLine = -1;
                         if (line.alpha() > 20)
                             sideOfLine = 0;
                     }
@@ -451,7 +457,7 @@ public class BlueAutoBeacons1 extends OpMode {
             }
             case MOVE_TO_BEACON2: {
                 boolean isVisible = scan(allTrackables.get(target2));
-                navigateBlind(10, .35, heading);
+                navigateBlind(5, .35, heading);
 
                 if ((isVisible && posy > 1170) || (line.alpha() > 10 && segmentTime + 1500 < time)) {
                     control = RobotSteps.INIT_ALIGN;
@@ -535,18 +541,18 @@ public class BlueAutoBeacons1 extends OpMode {
     {
         if (direction == 'r' && h - deg < 0)
         {
-            frontRight.setPower(-.15);
-            frontLeft.setPower(-.15);
-            backRight.setPower(-.15);
-            backLeft.setPower(-.15);
+            frontRight.setPower(-.12);
+            frontLeft.setPower(-.12);
+            backRight.setPower(-.12);
+            backLeft.setPower(-.12);
             return false;
         }
         else if (direction == 'l' && h - deg > 0)
         {
-            frontRight.setPower(.15);
-            frontLeft.setPower(.15);
-            backRight.setPower(.15);
-            backLeft.setPower(.15);
+            frontRight.setPower(.12);
+            frontLeft.setPower(.12);
+            backRight.setPower(.12);
+            backLeft.setPower(.12);
             return false;
         }
         return true;
