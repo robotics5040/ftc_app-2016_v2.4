@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * Created by bense on 11/11/2016.
  */
-@Autonomous(name = "Red Pos 2: Shoot 2/Hit cap ball/Park on center", group = "Red Autonomous2")
+@Autonomous(name = "Red Pos 2: Shoot 2/Hit cap ball/Park on center :)", group = "Red Autonomous2")
 public class RedPos2Shoot2Cap extends OpMode {
     int target, startDegrees, targetDegrees, shooterStartPos, rotateDegrees = 0;
     DcMotor frontLeft;
@@ -53,7 +53,7 @@ public class RedPos2Shoot2Cap extends OpMode {
 
     public static final String TAG = "Vuforia Sample";
 
-    public enum RobotSteps {INIT_START, DELAY, INIT_MOVE, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, RETURN, PARK, ALL_DONE, SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_DOS,SPIN2, ALIGN};
+    public enum RobotSteps {INIT_START, DELAY, INIT_MOVE, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, RETURN, PARK, ALL_DONE, SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_DOS,SPIN2, ALIGN, DELAY2};
     RobotSteps control = RobotSteps.INIT_START;
     OpenGLMatrix lastLocation = null;
     String loopNumber;
@@ -222,11 +222,19 @@ public class RedPos2Shoot2Cap extends OpMode {
                 break;
 
             }
+
             case RETURN: {//move forward to knock off cap ball
-                if (navigateTime(180, .6, 1400, heading))
-                    control = RobotSteps.SPIN2;
+                if (navigateTime(180, .6, 1700, heading))
+                    control = RobotSteps.DELAY2;
+                    telemetry.addData("Status", "Made it to the delay case");
                 break;
             }
+            /*case DELAY2: {//Initial delay, set control to 2 to skip delay
+                if (segmentTime + 500 < time) //set to 3 seconds for testing
+                    control = RobotSteps.PARK;
+                telemetry.addData("Status", "Waiting to start...");
+                break;
+            }*/
             /*case SPIN2: {//Turn
                 if (rotate('l', 180, heading)) {
                     control = RobotSteps.ALIGN;
@@ -244,8 +252,9 @@ public class RedPos2Shoot2Cap extends OpMode {
                 }
                 break;
             }
+
             case PARK: {//park
-                if (navigateTime(270, .5, 1000, heading))
+                if (navigateTime(180, .5, 1000, heading))
                     control = RobotSteps.ALL_DONE;
                 break;
             }

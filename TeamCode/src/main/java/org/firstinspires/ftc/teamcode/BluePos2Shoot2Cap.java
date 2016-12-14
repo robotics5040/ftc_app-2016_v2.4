@@ -416,13 +416,13 @@ public class BluePos2Shoot2Cap extends OpMode {
     }
     public boolean realign (int h)
     {
-        if (h + 4 < startDegrees) {
+        if (h + 6 < startDegrees) {
             frontRight.setPower(-.08);
             frontLeft.setPower(-.08);
             backRight.setPower(-.08);
             backLeft.setPower(-.08);
             segmentTime = time;
-        } else if (h - 4 > startDegrees) {
+        } else if (h - 6 > startDegrees) {
             frontRight.setPower(.08);
             frontLeft.setPower(.08);
             backRight.setPower(.08);
