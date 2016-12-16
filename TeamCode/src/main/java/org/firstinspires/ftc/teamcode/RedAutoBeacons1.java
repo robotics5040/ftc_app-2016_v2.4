@@ -31,7 +31,7 @@ import java.util.List;
  */
 @Autonomous (name = "Red pos 1: Shoot 1/Press 2", group = "Red Autonomous")
 public class RedAutoBeacons1 extends OpMode {
-    public final int VERSION = 9;
+    public final int VERSION = 10;
 
     public final int NUM_BEACONS = 2;
     int target, startDegrees, targetDegrees, shooterStartPos, sideOfLine, beaconState, target2 = 3, pushCheck = 0;
@@ -59,7 +59,7 @@ public class RedAutoBeacons1 extends OpMode {
 
     public enum RobotSteps {INIT_START, DELAY, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, INIT_MOVE_TO_BEACON, MOVE_TO_BEACON,
         INIT_ALIGN, ALIGN, INIT_MOVE_TO_PUSH_POS, MOVE_TO_PUSH_POS, INIT_REALIGN, REALIGN, INIT_SCAN, SCAN, INIT_PUSH,
-        PUSH, CHECK_PUSH, REVERSE, REREALIGN, INIT_MOVE_TO_BEACON2, MOVE_TO_BEACON2, COMPLETE};
+        PUSH, CHECK_PUSH, REVERSE, REREALIGN, INIT_MOVE_TO_BEACON2, MOVE_TO_BEACON2, COMPLETE, RANGE_CHECK};
     RobotSteps control = RobotSteps.INIT_START;
     OpenGLMatrix lastLocation = null;
     String loopNumber;
@@ -280,6 +280,7 @@ public class RedAutoBeacons1 extends OpMode {
             case INIT_MOVE_TO_PUSH_POS: {
                 allStop();
                 scan(allTrackables.get(target));
+                pusher.setPosition(.5);
                 if (segmentTime + 500 < time)
                     control = RobotSteps.MOVE_TO_PUSH_POS;
                 break;
@@ -289,12 +290,29 @@ public class RedAutoBeacons1 extends OpMode {
                 navigateBlind(90, .3, heading);
                 if (sonar.getUltrasonicLevel() > 0 && sonar.getUltrasonicLevel() < 20 + (heading * .5)) {
                     allStop();
+                    control = RobotSteps.RANGE_CHECK;
+                }
+                break;
+            }
+            case RANGE_CHECK: {
+                scan(allTrackables.get(target2));
+                if (sonar.getUltrasonicLevel() <= 15 && segmentTime + 500 > time) {
+                    navigateBlind(270, .3, heading);
+                } else {
                     control = RobotSteps.INIT_REALIGN;
+                    allStop();
+                    segmentTime = time;
                 }
                 break;
             }
             case  INIT_REALIGN: {
                 boolean isVisible = scan(allTrackables.get(target2));
+                pusher.setPosition(0);
+                if (segmentTime + 5000 < time) {
+                    target2 = 1;
+                    segmentTime = time;
+                }
+
                 int x = 0;
                 if (target == 3)
                     x = beaconPos1[0];
@@ -411,7 +429,6 @@ public class RedAutoBeacons1 extends OpMode {
             }
             case REVERSE: {
                 navigateBlind(270, .5, heading);
-                pusher.setPosition(0);
                 if (sonar.getUltrasonicLevel() > 35) {
                     control = RobotSteps.REREALIGN;
                     if (target2 == 1)
@@ -430,6 +447,7 @@ public class RedAutoBeacons1 extends OpMode {
                 break;
             }
             case INIT_MOVE_TO_BEACON2: {
+                pusher.setPosition(0);
                 scan(allTrackables.get(target2));
                 if (segmentTime + 500 < time) {
                     control = RobotSteps.MOVE_TO_BEACON2;

@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.I2cDevice;
 import com.qualcomm.robotcore.hardware.I2cDeviceReader;
+import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -48,6 +49,7 @@ public class OmnibotAutoTest extends OpMode {
     double posx, posy, posz, startx, starty;
     float mmFTCFieldWidth;
     ColorSensor color, line;
+    UltrasonicSensor sonar;
 
     public static final String TAG = "Vuforia Sample";
 
@@ -68,6 +70,7 @@ public class OmnibotAutoTest extends OpMode {
         line.setI2cAddress(newAddress);
         color.enableLed(false);
         line.enableLed(true);
+        sonar = hardwareMap.ultrasonicSensor.get("sonar");
 
         shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -241,6 +244,7 @@ public class OmnibotAutoTest extends OpMode {
         telemetry.addData("Line", line.argb());
         telemetry.addData("Shooter Degrees", shooter.getCurrentPosition());
         telemetry.addData("Target Degrees", targetDegrees);
+        telemetry.addData("Sonar", sonar.getUltrasonicLevel());
 
         if (lastLocation != null) {
             VectorF trans = lastLocation.getTranslation();

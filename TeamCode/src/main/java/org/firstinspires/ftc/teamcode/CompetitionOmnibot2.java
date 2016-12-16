@@ -127,7 +127,7 @@ public class CompetitionOmnibot2 extends OpMode {
         }
         //if (!gamepad2.a)//stops program from looping more than once, on shot per one button press
         //    aPressed = true;
-        if (gamepad2.a && sweep == 0 && aPressed && shoot == false && manualRest == false) {
+        if (gamepad2.a && sweep == 0 && aPressed && !shoot && !manualRest) {
             shooter.setTargetPosition(-1200 + shootCount*-1440);
             shootCount++;
 
@@ -171,39 +171,13 @@ public class CompetitionOmnibot2 extends OpMode {
         else if (sweep == 0)
             sweeper.setPower(0);
 
-
-        //Shooting + automatic reset
-        /*if (shoot == true)
-        {
-            if (shooter.getCurrentPosition() > shooter.getTargetPosition() ) {
-                telemetry.addData("Loop", "Shooting");
-                if (segmentTime + 200 < System.currentTimeMillis()) {
-                    shooter.setPower(.5);
-                }else
-                    shooter.setPower(1);
-            }
-            else {
-                if (shooter.getCurrentPosition() <= shooter.getTargetPosition()&& !shoot) {
-                    telemetry.addData("Loop", "Reseting");
-                    shooter.setPower(-.1);
-                    if (reset)
-                        motorReset = true;
-                    reset = false;
-                } else {
-                    telemetry.addData("Loop", "Reset");
-                    shooter.setPower(0);
-                    shoot = false;
-                }
-            }
-        }*/
         //Manual fire
         if (gamepad2.left_bumper)
         {
-            if (gamepad2.right_stick_y < -.1 || gamepad2.right_stick_y > .1) {
+            manualRest = true;
+            if (gamepad2.right_bumper) {
                 shooter.setPower(.5);
-                manualRest = true;
             } else {
-                manualRest = false;
                 shooter.setPower(0);
             }
 
@@ -214,7 +188,7 @@ public class CompetitionOmnibot2 extends OpMode {
                 shooterResetPos = 0;
                 shooter.setTargetPosition(0);
             }
-        }
+        } else manualRest = false;
 
         if (motorReset) {
             motorReset = false;
