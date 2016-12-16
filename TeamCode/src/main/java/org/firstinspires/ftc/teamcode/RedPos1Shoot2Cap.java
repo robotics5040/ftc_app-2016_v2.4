@@ -224,7 +224,7 @@ public class RedPos1Shoot2Cap extends OpMode {
                 break;
             }
             case SPIN: {//Turn
-                if (rotate('r', 30, heading)) { //Doesn't spin enough......
+                if (rotate('l', -30, heading)) { //Doesn't spin enough......
                     control = RobotSteps.ALIGN;
                     rotateDegrees = 30;
                     allStop();
