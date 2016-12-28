@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * Created by bense on 11/11/2016.
  */
-@Autonomous(name = "Red Pos 2: Shoot 2/Hit cap ball/Park on center :)", group = "Red Autonomous2")
+@Autonomous(name = "Red Pos 2: Shoot 2/Hit cap ball/Park on center :)", group = "Red Autonomous")
 public class RedPos2Shoot2Cap extends OpMode {
     int target, startDegrees, targetDegrees, shooterStartPos, rotateDegrees = 0;
     DcMotor frontLeft;
