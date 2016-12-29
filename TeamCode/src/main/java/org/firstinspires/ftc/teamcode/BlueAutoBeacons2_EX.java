@@ -59,7 +59,7 @@ public class BlueAutoBeacons2_EX extends OpMode {
     public enum RobotSteps {INIT_START, DELAY, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, INIT_ROTATE, ROTATE, ROTATE_ALIGN,
         INIT_MOVE_TO_BEACON, MOVE_TO_BEACON, INIT_ALIGN, ALIGN, INIT_MOVE_TO_PUSH_POS, MOVE_TO_PUSH_POS, RANGE_CHECK, INIT_REALIGN,
         REALIGN, INIT_SCAN, SCAN, INIT_PUSH, PUSH, CHECK_PUSH, REVERSE, REREALIGN, INIT_MOVE_TO_BEACON2,
-        MOVE_TO_BEACON2, COMPLETE}
+        MOVE_TO_BEACON2, COMPLETE, SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_DOS}
     RobotSteps control = RobotSteps.INIT_START;
     OpenGLMatrix lastLocation = null;
     String loopNumber;
@@ -191,13 +191,44 @@ public class BlueAutoBeacons2_EX extends OpMode {
             case SHOOT: {
                 if (!shoot()) {
                     segmentTime = time;
-                    control = RobotSteps.ROTATE;
+                    control = RobotSteps.SWEEPER_MOVE_BACKWARD;
                 }
                 telemetry.addData("Status", "Shooting particle...");
                 break;
             }
-            case INIT_ROTATE: {
-                //Not needed, left in just in case
+            case SWEEPER_MOVE_BACKWARD: {//swpr.mov -> < var(-.5)
+                sweeper.setPower(-.5);
+                if (segmentTime + 70 < time) {
+                    sweeper.setPower(0);
+                    segmentTime = time;
+                    control = BlueAutoBeacons2_EX.RobotSteps.SWEEPER_MOVE_FORWARD;
+                }
+                break;
+            }
+            case SWEEPER_MOVE_FORWARD: {//swpr.mov -> > var(.7) -- pos+
+                sweeper.setPower(.7);
+                if (segmentTime + 1300 < time)
+                {
+                    control = BlueAutoBeacons2_EX.RobotSteps.SHOOT_DOS;
+                    shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+                    sweeper.setPower(0);
+                    shooter.setTargetPosition(-1340);
+                    segmentTime = time;
+
+                }
+
+                break;
+
+            }
+            case SHOOT_DOS: {//shoot^2
+                if (!shoot() ) {
+                    control = RobotSteps.ROTATE;
+                    segmentTime = time;
+                }
+                break;
+
             }
             case ROTATE: {
                 if (rotate('r', 180, heading)) {
@@ -630,13 +661,14 @@ public class BlueAutoBeacons2_EX extends OpMode {
 
     public boolean realign (int h)
     {
-        if (h + 6 < startDegrees) {
+        allStop();
+        if (h + 3 < startDegrees) {
             frontRight.setPower(-.08);
             frontLeft.setPower(-.08);
             backRight.setPower(-.08);
             backLeft.setPower(-.08);
             segmentTime = time;
-        } else if (h - 6 > startDegrees) {
+        } else if (h - 3 > startDegrees) {
             frontRight.setPower(.08);
             frontLeft.setPower(.08);
             backRight.setPower(.08);
