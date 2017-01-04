@@ -28,14 +28,14 @@ import java.util.List;
 /**
  * Created by bense on 12/6/2016.
  */
-@Autonomous (name = "Blue pos 1: Shoot 1/Press 2 EX", group = "Blue Autonomous")
+@Autonomous (name = "Blue pos 1: Press 2 EX", group = "Blue Autonomous")
 public class BlueAutoBeaconsExperimental extends OpMode {
     //REMOVED FIRST LINE CHECK
     public final int VERSION = 14;
 
     public final int NUM_BEACONS = 2;
     int target, startDegrees, targetDegrees, shooterStartPos, sideOfLine, beaconState, target2 = 0, pushCheck = 0;
-    int[] beaconPos1 = {1440, -485}, beaconPos2 = {1440, 740};//{x, y}
+    int[] beaconPos1 = {1440, -465}, beaconPos2 = {1440, 750};//{x, y}
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
@@ -183,8 +183,9 @@ public class BlueAutoBeaconsExperimental extends OpMode {
             }
             case INIT_MOVE_TO_BEACON: {
                 scan(allTrackables.get(target2));
-                if (segmentTime + 500 < time) {
+                if (segmentTime < time) {
                     control = RobotSteps.MOVE_TO_BEACON;
+                    segmentTime = time;
                 }
                 telemetry.addData("Status", "Preparing to move to beacon...");
                 break;
@@ -196,7 +197,7 @@ public class BlueAutoBeaconsExperimental extends OpMode {
                 if (isVisible && posx > beaconPos1[0]) {
                     navigateBlind(90, .3, heading);
                 }
-                if ((sonar.getUltrasonicLevel() > 0 && sonar.getUltrasonicLevel() < 45) || line.alpha() > 20) {
+                if ((segmentTime + 1000 < time && sonar.getUltrasonicLevel() > 0 && sonar.getUltrasonicLevel() < 45) || line.alpha() > 20) {
                     segmentTime = time;
                     control = RobotSteps.INIT_ALIGN;
                     allStop();
@@ -213,7 +214,7 @@ public class BlueAutoBeaconsExperimental extends OpMode {
                     y = beaconPos2[1];
                 if (realign(heading) && isVisible) {
                     scan(allTrackables.get(3));
-                    if (line.alpha() > 10)
+                    if (line.alpha() > 20)
                         sideOfLine = 0;//on target
                     else if (posy > y)
                         sideOfLine = -1;//left of target
@@ -335,7 +336,7 @@ public class BlueAutoBeaconsExperimental extends OpMode {
             case INIT_SCAN: {
                 allStop();
                 if (realign(heading)) {
-                    if (line.alpha() < 10)
+                    if (line.alpha() < 20)
                         control = RobotSteps.INIT_REALIGN;
                     else
                         control = RobotSteps.SCAN;
@@ -430,9 +431,9 @@ public class BlueAutoBeaconsExperimental extends OpMode {
             }
             case MOVE_TO_BEACON2: {
                 boolean isVisible = scan(allTrackables.get(target2));
-                navigateBlind(5, .35, heading);
+                navigateBlind(2, .35, heading);
 
-                if ((isVisible && posx > 1170) || (line.alpha() > 10 && segmentTime + 1500 < time)) {
+                if ((isVisible && posx > 1170) || (line.alpha() > 20 && segmentTime + 1500 < time)) {
                     control = RobotSteps.INIT_ALIGN;
                     allStop();
                 }

@@ -50,6 +50,7 @@ public class OmnibotAutoTest extends OpMode {
     float mmFTCFieldWidth;
     ColorSensor color, line;
     UltrasonicSensor sonar;
+    UltrasonicSensor spareSonar;
 
     public static final String TAG = "Vuforia Sample";
 
@@ -71,6 +72,7 @@ public class OmnibotAutoTest extends OpMode {
         color.enableLed(false);
         line.enableLed(true);
         sonar = hardwareMap.ultrasonicSensor.get("sonar");
+        spareSonar = hardwareMap.ultrasonicSensor.get("sonar2");
 
         shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -245,6 +247,7 @@ public class OmnibotAutoTest extends OpMode {
         telemetry.addData("Shooter Degrees", shooter.getCurrentPosition());
         telemetry.addData("Target Degrees", targetDegrees);
         telemetry.addData("Sonar", sonar.getUltrasonicLevel());
+        telemetry.addData("Spare Sonar", spareSonar.getUltrasonicLevel());
 
         if (lastLocation != null) {
             VectorF trans = lastLocation.getTranslation();
