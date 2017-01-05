@@ -230,7 +230,7 @@ public class RedAutoBeaconsExperimental2 extends OpMode {
                 if (target2 == 1)
                     x = beaconPos2[0];
                 if (realign(heading) && isVisible) {
-                    scan(allTrackables.get(3));
+                    //scan(allTrackables.get(3));
                     if (line.alpha() > 20)
                         sideOfLine = 0;//on target
                     else if (posx < x)
@@ -482,7 +482,7 @@ public class RedAutoBeaconsExperimental2 extends OpMode {
             case MOVE_TO_BEACON2: {
                 boolean isVisible = scan(allTrackables.get(target2));
                 navigateBlind(178, .35, heading);
-                if ((isVisible && posx > 1170) || (line.alpha() > 20 && segmentTime + 1500 < time) || spareSonar.getUltrasonicLevel() <= 65) {
+                if ((isVisible && posx > 1170) || (line.alpha() > 20 && segmentTime + 1500 < time) || (spareSonar.getUltrasonicLevel() <= 65 && segmentTime + 3000 < time)) {
                     control = RobotSteps.INIT_ALIGN;
 
                     allStop();
