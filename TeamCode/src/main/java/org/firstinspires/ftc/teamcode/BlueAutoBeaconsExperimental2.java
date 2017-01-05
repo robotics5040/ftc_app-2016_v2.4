@@ -31,7 +31,7 @@ import java.util.List;
 @Autonomous (name = "Blue pos 1: Shoot 1/Press 2 EX", group = "Blue Autonomous")
 public class BlueAutoBeaconsExperimental2 extends OpMode {
     //REMOVED FIRST LINE CHECK
-    public final int VERSION = 14;
+    public final int VERSION = 15;
 
     public final int NUM_BEACONS = 2;
     int target, startDegrees, targetDegrees, shooterStartPos, sideOfLine, beaconState, target2 = 0, pushCheck = 0, rotateDegrees = 0;
@@ -434,7 +434,7 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
             case MOVE_TO_BEACON2: {
                 boolean isVisible = scan(allTrackables.get(target2));
                 navigateBlind(5, .35, heading);
-                if ((isVisible && posx > 1170) || (line.alpha() > 10 && segmentTime + 1500 < time) || spareSonar.getUltrasonicLevel() <= 70) {
+                if ((isVisible && posx > 1170) || (line.alpha() > 10 && segmentTime + 1500 < time) || spareSonar.getUltrasonicLevel() <= 65) {
                     control = RobotSteps.INIT_ALIGN;
                     allStop();
                 }
