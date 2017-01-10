@@ -28,12 +28,11 @@ import java.util.List;
 /**
  * Created by bense on 12/6/2016.
  */
-@Autonomous (name = "Blue pos 1: Shoot 1/Press 2 EX", group = "Blue Autonomous")
+@Autonomous (name = "Blue pos 1: Shoot 1/Press 2", group = "Blue Autonomous")
 public class BlueAutoBeaconsExperimental2 extends OpMode {
     //REMOVED FIRST LINE CHECK
-    public final int VERSION = 15;
+    public final int VERSION = 16;
 
-    public final int NUM_BEACONS = 2;
     int target, startDegrees, targetDegrees, shooterStartPos, sideOfLine, beaconState, target2 = 0, pushCheck = 0, rotateDegrees = 0;
     int[] beaconPos1 = {1440, -485}, beaconPos2 = {1440, 740};//{x, y}
     DcMotor frontLeft;
@@ -44,7 +43,7 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
     DcMotor sweeper;
     GyroSensor gyro;
     float robotBearing;
-    boolean pushable = false;
+    boolean pushable = false, shootAbort = false;
 
     Long time, startTime, segmentTime;
     VuforiaLocalizer vuforia;
@@ -185,7 +184,7 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
             }
             case INIT_MOVE_TO_BEACON: {
                 scan(allTrackables.get(target2));
-                if (segmentTime + 500 < time) {
+                if (segmentTime < time) {
                     control = RobotSteps.MOVE_TO_BEACON;
                     segmentTime = time;
                 }
@@ -391,15 +390,15 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
                 if (segmentTime + 500 < time)
                     control = RobotSteps.REVERSE;
                 if (beaconState == -1) {
-                    frontLeft.setPower(.1);
-                    frontRight.setPower(.1);
-                    backLeft.setPower(-.4);
-                    backRight.setPower(-.4);
+                    frontLeft.setPower(.2);
+                    frontRight.setPower(.2);
+                    backLeft.setPower(-.3);
+                    backRight.setPower(-.3);
                 } else if (beaconState == 1) {
-                    frontLeft.setPower(.4);
-                    frontRight.setPower(.4);
-                    backLeft.setPower(-.1);
-                    backRight.setPower(-.1);
+                    frontLeft.setPower(.3);
+                    frontRight.setPower(.3);
+                    backLeft.setPower(-.2);
+                    backRight.setPower(-.2);
                 }
                 break;
             }
@@ -434,7 +433,7 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
             case MOVE_TO_BEACON2: {
                 boolean isVisible = scan(allTrackables.get(target2));
                 navigateBlind(5, .35, heading);
-                if ((isVisible && posx > 1170) || (line.alpha() > 10 && segmentTime + 1500 < time) || spareSonar.getUltrasonicLevel() <= 65) {
+                if ((isVisible && posx > 1170) || (line.alpha() > 10 && segmentTime + 1500 < time) || (spareSonar.getUltrasonicLevel() <= 65 && segmentTime + 3000 < time)) {
                     control = RobotSteps.INIT_ALIGN;
                     allStop();
                 }
@@ -468,7 +467,12 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
                 shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 shooter.setTargetPosition(-1340);
                 shooterStartPos = 0;
-                control = RobotSteps.SHOOT;
+                if ((30000 - (time - startTime))/1000 > .5)
+                    control = RobotSteps.SHOOT;
+                else {
+                    control = RobotSteps.COMPLETE;
+                    shootAbort = true;
+                }
                 telemetry.addData("Status", "Setting up shooter...");
                 break;
             }
@@ -482,6 +486,8 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
             }
             default: {//Hopefully this only runs when program ends
                 allStop();
+                if (shootAbort)
+                    telemetry.addData("WARNING", "Could not shoot due to lack of time!");
                 telemetry.addData("Status", "Switch is in default. Waiting for autonomous to end...");
             }
         }

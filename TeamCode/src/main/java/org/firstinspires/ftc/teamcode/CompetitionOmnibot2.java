@@ -181,14 +181,15 @@ public class CompetitionOmnibot2 extends OpMode {
                 shooter.setPower(0);
             }
 
-            if (gamepad2.y)
-            {
-                shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                shooterResetPos = 0;
-                shooter.setTargetPosition(0);
-            }
-        } else manualRest = false;
+        } else if (manualRest) {
+            shooter.setPower(0);
+            manualRest = false;
+            shootCount = 0;
+            shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            shooterResetPos = 0;
+            shooter.setTargetPosition(0);
+        }
 
         if (motorReset) {
             motorReset = false;

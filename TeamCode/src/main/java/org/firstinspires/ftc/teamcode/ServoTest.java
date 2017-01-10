@@ -17,7 +17,7 @@ public class ServoTest extends OpMode {
 
     public void init()
     {
-        servo = hardwareMap.servo.get("servo");
+        servo = hardwareMap.servo.get("pusher");
         servo.setPosition(0);
     }
 
@@ -31,12 +31,16 @@ public class ServoTest extends OpMode {
                 count--;
             if (gamepad1.dpad_up)
                 count++;
-            if (count * iteration > 360)
+            if (count * iteration > 180)
                 count--;
             if (count * iteration < 0)
                 count++;
-            servo.setPosition(((double)count * iteration)/360);
+            servo.setPosition(((double)count * iteration)/180);
         }
+        if (gamepad1.left_bumper)
+            count = 4;
+        if (gamepad1.right_bumper)
+            count = 0;
         telemetry.addData("Degrees", count * iteration);
         telemetry.addData("A pressed", aPressed);
     }

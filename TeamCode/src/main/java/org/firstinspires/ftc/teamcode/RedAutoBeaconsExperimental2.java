@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * Created by bense on 12/6/2016.
  */
-@Autonomous (name = "Red pos 1: Shoot 1/Press 2 EX2", group = "Red Autonomous")
+@Autonomous (name = "Red pos 1: Shoot 1/Press 2", group = "Red Autonomous")
 public class RedAutoBeaconsExperimental2 extends OpMode {
     //REMOVED FIRST LINE CHECK
     public final int VERSION = 15;
@@ -439,15 +439,15 @@ public class RedAutoBeaconsExperimental2 extends OpMode {
                 if (segmentTime + 500 < time)
                     control = RobotSteps.REVERSE;
                 if (beaconState == -1) {
-                    frontLeft.setPower(.1);
-                    frontRight.setPower(.1);
-                    backLeft.setPower(-.4);
-                    backRight.setPower(-.4);
+                    frontLeft.setPower(.2);
+                    frontRight.setPower(.2);
+                    backLeft.setPower(-.3);
+                    backRight.setPower(-.3);
                 } else if (beaconState == 1) {
-                    frontLeft.setPower(.4);
-                    frontRight.setPower(.4);
-                    backLeft.setPower(-.1);
-                    backRight.setPower(-.1);
+                    frontLeft.setPower(.3);
+                    frontRight.setPower(.3);
+                    backLeft.setPower(-.2);
+                    backRight.setPower(-.2);
                 }
                 break;
             }
