@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * Created by bense on 11/11/2016.
  */
-@Autonomous(name = "Red Pos 2: Shoot/Return to Start", group = "Red Autonomous")
+@Autonomous(name = "Red Pos 2: Shoot 2/Stop", group = "Red Autonomous")
 public class Auto15 extends OpMode {
     int  target, startDegrees, targetDegrees, shooterStartPos;
     DcMotor frontLeft;
