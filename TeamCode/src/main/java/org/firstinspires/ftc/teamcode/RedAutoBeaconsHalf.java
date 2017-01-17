@@ -29,14 +29,15 @@ import java.util.List;
 /**
  * Created by bense on 12/6/2016.
  */
-@Autonomous (name = "Blue pos 1: Shoot 1/Press 2", group = "Blue Autonomous")
+@Autonomous (name = "Red pos 1: Shoot 2/Press 2/Stop", group = "Red Autonomous")
 @Disabled
-public class BlueAutoBeaconsExperimental2 extends OpMode {
-    //REMOVED FIRST LINE CHECK
-    public final int VERSION = 16;
+public class RedAutoBeaconsHalf extends OpMode {
+    //Removing all possible delays and speeding up motors
+    public final int VERSION = 17;
 
-    int target, startDegrees, targetDegrees, shooterStartPos, sideOfLine, beaconState, target2 = 0, pushCheck = 0, rotateDegrees = 0;
-    int[] beaconPos1 = {1440, -485}, beaconPos2 = {1440, 740};//{x, y}
+    public final int NUM_BEACONS = 2;
+    int target, startDegrees, targetDegrees, shooterStartPos, sideOfLine, beaconState, target2 = 3, pushCheck = 0;
+    int[] beaconPos1 = {-75, 1465}, beaconPos2 = {1110, 1465};//{x, y}
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
@@ -45,7 +46,7 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
     DcMotor sweeper;
     GyroSensor gyro;
     float robotBearing;
-    boolean pushable = false, shootAbort = false;
+    boolean pushable = false;
 
     Long time, startTime, segmentTime;
     VuforiaLocalizer vuforia;
@@ -54,15 +55,16 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
     float mmFTCFieldWidth;
     ColorSensor color;
     ColorSensor line;
-    UltrasonicSensor sonar, spareSonar;
+    UltrasonicSensor sonar;
+    UltrasonicSensor spareSonar;
     Servo pusher;
 
     public static final String TAG = "Vuforia Sample";
 
-    public enum RobotSteps {INIT_START, DELAY, INITIAL_MOVE, INIT_MOVE_TO_BEACON, MOVE_TO_BEACON,
+    public enum RobotSteps {INIT_START, DELAY, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, INIT_MOVE_TO_BEACON, MOVE_TO_BEACON,
         INIT_ALIGN, ALIGN, INIT_MOVE_TO_PUSH_POS, MOVE_TO_PUSH_POS, INIT_REALIGN, REALIGN, INIT_SCAN, SCAN, INIT_PUSH,
         PUSH, CHECK_PUSH, REVERSE, REREALIGN, INIT_MOVE_TO_BEACON2, MOVE_TO_BEACON2, COMPLETE, RANGE_CHECK, PRESCAN,
-        TURN_TO_SHOOT, INIT_MOVE_TO_SHOOT, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT};
+        SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_TWO, MOVE_TO_PARK};
     RobotSteps control = RobotSteps.INIT_START;
     OpenGLMatrix lastLocation = null;
     String loopNumber;
@@ -104,11 +106,11 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
 
         VuforiaTrackables targets = this.vuforia.loadTrackablesFromAsset("FTC_2016-17");
 
-        VuforiaTrackable blueWheels  = targets.get(0); //load wheels
-        blueWheels.setName("Wheels");
+        VuforiaTrackable redTools  = targets.get(1); //load tools
+        redTools.setName("Tools");
 
-        VuforiaTrackable blueLegos  = targets.get(2); //load legos
-        blueLegos.setName("Legos");
+        VuforiaTrackable redGears  = targets.get(3); //load gears
+        redGears.setName("Gears");
 
         allTrackables = new ArrayList<VuforiaTrackable>();
         allTrackables.addAll(targets);
@@ -117,21 +119,21 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
         float mmBotWidth       = (float)16.5 * mmPerInch;
         mmFTCFieldWidth  = (12*12 - 2) * mmPerInch;
 
-        OpenGLMatrix blueWheelsLocationOnField = OpenGLMatrix
-                .translation(mmFTCFieldWidth/2, mmFTCFieldWidth/2 - (float)2082.8, 0)
+        OpenGLMatrix redToolsLocationOnField = OpenGLMatrix //set up tracking for tools
+                .translation(mmFTCFieldWidth/2 - (float)863.6, mmFTCFieldWidth/2, 0)
                 .multiplied(Orientation.getRotationMatrix(
                         AxesReference.EXTRINSIC, AxesOrder.XZX,
-                        AngleUnit.DEGREES, 90, -90, 0));
-        blueWheels.setLocation(blueWheelsLocationOnField);
-        RobotLog.ii(TAG, "Wheels=%s", format(blueWheelsLocationOnField));
+                        AngleUnit.DEGREES, 90, 0, 0));
+        redTools.setLocation(redToolsLocationOnField);
+        RobotLog.ii(TAG, "Tools=%s", format(redToolsLocationOnField));
 
-        OpenGLMatrix blueLegosLocationOnField = OpenGLMatrix
-                .translation(mmFTCFieldWidth/2, mmFTCFieldWidth/2 - (float)863.6, 0)
+        OpenGLMatrix redGearsLocationOnField = OpenGLMatrix //set up tracking for gears
+                .translation(mmFTCFieldWidth/2 - (float)2082.8, mmFTCFieldWidth/2, 0)
                 .multiplied(Orientation.getRotationMatrix(
                         AxesReference.EXTRINSIC, AxesOrder.XZX,
-                        AngleUnit.DEGREES, 90, -90, 0));
-        blueLegos.setLocation(blueLegosLocationOnField);
-        RobotLog.ii(TAG, "Legos=%s", format(blueLegosLocationOnField));
+                        AngleUnit.DEGREES, 90, 0, 0));
+        redGears.setLocation(redGearsLocationOnField);
+        RobotLog.ii(TAG, "Gears=%s", format(redGearsLocationOnField));
 
         OpenGLMatrix phoneLocationOnRobot = OpenGLMatrix //set up phone
                 .translation(mmBotWidth/2,(float)44.45 + 175,200)
@@ -140,8 +142,8 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
                         AngleUnit.DEGREES, -90, -90, 0));
         RobotLog.ii(TAG, "phone=%s", format(phoneLocationOnRobot));
 
-        ((VuforiaTrackableDefaultListener)blueWheels.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
-        ((VuforiaTrackableDefaultListener)blueLegos.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
+        ((VuforiaTrackableDefaultListener)redTools.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
+        ((VuforiaTrackableDefaultListener)redGears.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
 
         targets.activate();
         telemetry.addData("Version", VERSION);
@@ -153,8 +155,8 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
         //Constantly updating variables go here
         time = System.currentTimeMillis();
 
-        int heading = gyro.getHeading() - rotateDegrees;
-        if (heading + rotateDegrees > 180)
+        int heading = gyro.getHeading();
+        if (heading > 180)
             heading -= 360;
 
         //Main switch for controlling robot
@@ -170,25 +172,70 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
             }
             case DELAY: {//No Delay
                 if (segmentTime < time) {
-                    control = RobotSteps.INIT_MOVE_TO_BEACON;
+                    control = RobotSteps.MOVE_TO_SHOOT;
                     segmentTime = time;
                 }
                 telemetry.addData("Status", "Waiting for 5 seconds...");
                 break;
             }
-            case INITIAL_MOVE: {
-                if (navigateTime(0, .6, 850, heading)) {
-                    control = RobotSteps.MOVE_TO_BEACON;
+            case MOVE_TO_SHOOT: {
+                if (navigateTime(180, .6, 850, heading))
+                    control = RobotSteps.INIT_SHOOT;
+                telemetry.addData("Status", "Moving to shooting position...");
+                break;
+            }
+            case INIT_SHOOT: {
+                allStop();
+                shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                shooter.setTargetPosition(-1340);
+                shooterStartPos = 0;
+                control = RobotSteps.SHOOT;
+                telemetry.addData("Status", "Setting up shooter...");
+                break;
+            }
+            case SHOOT: {
+                if (!shoot()) {
+                    segmentTime = time;
+                    control = RobotSteps.SWEEPER_MOVE_BACKWARD;
+                }
+                telemetry.addData("Status", "Shooting particle...");
+                break;
+            }
+            case SWEEPER_MOVE_BACKWARD: {//swpr.mov -> < var(-.5)
+                sweeper.setPower(-.5);
+                if (segmentTime + 70 < time) {
+                    sweeper.setPower(0);
+                    segmentTime = time;
+                    control = RobotSteps.SWEEPER_MOVE_FORWARD;
+                }
+                break;
+            }
+            case SWEEPER_MOVE_FORWARD: {//swpr.mov -> > var(.7) -- pos+
+                sweeper.setPower(.7);
+                if (segmentTime + 1300 < time)
+                {
+                    control = RobotSteps.SHOOT_TWO;
+                    shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+                    sweeper.setPower(0);
+                    shooter.setTargetPosition(-1340);
                     segmentTime = time;
                 }
-                telemetry.addData("Status", "Moving to shooting position...");
+                break;
+            }
+            case SHOOT_TWO: {//shoot^2
+                if (!shoot() ) {
+                    control = RobotSteps.INIT_MOVE_TO_BEACON;
+                    segmentTime = time;
+                }
                 break;
             }
             case INIT_MOVE_TO_BEACON: {
                 scan(allTrackables.get(target2));
                 if (segmentTime < time) {
                     control = RobotSteps.MOVE_TO_BEACON;
-                    segmentTime = time;
                 }
                 telemetry.addData("Status", "Preparing to move to beacon...");
                 break;
@@ -196,11 +243,11 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
             case MOVE_TO_BEACON: {
                 boolean isVisible = scan(allTrackables.get(target2));
                 if (!isVisible)
-                    navigateBlind(55, .35, heading);
+                    navigateBlind(120, .7, heading);
                 if (isVisible && posx > beaconPos1[0]) {
-                    navigateBlind(90, .3, heading);
+                    navigateBlind(90, .7, heading);
                 }
-                if ((segmentTime + 1000 < time && sonar.getUltrasonicLevel() > 0 && sonar.getUltrasonicLevel() < 45) || line.alpha() > 20) {
+                if ((sonar.getUltrasonicLevel() > 0 && sonar.getUltrasonicLevel() < 45) || line.alpha() > 20) {
                     segmentTime = time;
                     control = RobotSteps.INIT_ALIGN;
                     allStop();
@@ -210,18 +257,18 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
             }
             case INIT_ALIGN: {
                 boolean isVisible = scan(allTrackables.get(target2));
-                int y = 0;
-                if (target2 == 0)
-                    y = beaconPos1[1];
-                if (target2 == 2)
-                    y = beaconPos2[1];
+                int x = 0;
+                if (target2 == 3)
+                    x = beaconPos1[0];
+                if (target2 == 1)
+                    x = beaconPos2[0];
                 if (realign(heading) && isVisible) {
-                    scan(allTrackables.get(3));
-                    if (line.alpha() > 10)
+                    //scan(allTrackables.get(3));
+                    if (line.alpha() > 20)
                         sideOfLine = 0;//on target
-                    else if (posy > y)
+                    else if (posx < x)
                         sideOfLine = -1;//left of target
-                    else if (posy < y)
+                    else if (posx > x)
                         sideOfLine = 1;//right of target
                     control = RobotSteps.INIT_MOVE_TO_PUSH_POS;
                     segmentTime = time;
@@ -233,17 +280,54 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
                 telemetry.addData("Status", "Realigning...");
                 break;
             }
+            /*case ALIGN: {
+                scan(allTrackables.get(target2));
+                int x = 0;
+                if (target == 3)
+                    x = beaconPos1[0];
+                if (target == 1)
+                    x = beaconPos2[0];
+                if (sideOfLine == 0) {
+                    control = RobotSteps.INIT_MOVE_TO_PUSH_POS;
+                    segmentTime = time;
+                } else {
+                    if (sideOfLine == -1) {
+                        navigateBlind(180, .3, heading);
+                        if (posx - 20 > x) {
+                            sideOfLine = 1;
+                            segmentTime = time;
+                        }
+                        if (line.alpha() > 20)
+                            sideOfLine = 0;
+                    }
+                    if (sideOfLine == 1) {
+                        navigateBlind(0, .3, heading);
+                        if (posx + 20 < x) {
+                            sideOfLine = -1;
+                            segmentTime = time;
+                        }
+                        if (line.alpha() > 20)
+                            sideOfLine = 0;
+                    }
+                }
+                telemetry.addData("Status", "Finding line...");
+                break;
+            }*/
             case INIT_MOVE_TO_PUSH_POS: {
                 allStop();
                 scan(allTrackables.get(target2));
                 pusher.setPosition(.5);
-                if (segmentTime + 500 < time)
+                if (segmentTime + 100 < time)
                     control = RobotSteps.MOVE_TO_PUSH_POS;
                 break;
             }
             case MOVE_TO_PUSH_POS: {
                 scan(allTrackables.get(target2));
-                navigateBlind(90, .3, heading);
+                if (target2 == 1)
+                    navigateBlind(80, .4, heading);
+                else
+                    navigateBlind(90, .4, heading);
+
                 if (sonar.getUltrasonicLevel() < 25)
                     allStop();
                 if (sonar.getUltrasonicLevel() > 0 && sonar.getUltrasonicLevel() < 20 + (heading * .5)) {
@@ -266,57 +350,60 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
             case  INIT_REALIGN: {
                 boolean isVisible = scan(allTrackables.get(target2));
                 pusher.setPosition(0);
-                if (segmentTime + 5000 < time) {
+                if (segmentTime + 3000 < time) {
                     target2 = 1;
                     segmentTime = time;
                 }
 
-                int y = 0;
-                if (target2 == 0)
-                    y = beaconPos1[1];
-                if (target2 == 2)
-                    y = beaconPos2[1];
+                int x = 0;
+                if (target2 == 3)
+                    x = beaconPos1[0];
+                if (target2 == 1)
+                    x = beaconPos2[0];
                 if (realign(heading)) {
                     if (isVisible) {
                         if (line.alpha() > 20)
                             sideOfLine = 0;//on target
-                        else if (posy > y)
+                        else if (posx < x)
                             sideOfLine = -1;//left of target
-                        else if (posy < y)
+                        else if (posx > x)
                             sideOfLine = 1;//right of target
                     }
                     else
                         sideOfLine = 1;
                     control = RobotSteps.REALIGN;
-                    segmentTime = time;
+                    segmentTime = time + 1000;
                 }
                 telemetry.addData("Status", "Realigning...");
                 break;
             }
             case REALIGN: {
                 boolean isVisible = scan(allTrackables.get(target2));
-                int y = 0;
-                if (target2 == 0)
-                    y = beaconPos1[1];
-                if (target2 == 2)
-                    y = beaconPos2[1];
+                int x = 0;
+                if (target2 == 3)
+                    x = beaconPos1[0];
+                if (target2 == 1)
+                    x = beaconPos2[0];
                 if (sideOfLine == 0) {
                     control = RobotSteps.PRESCAN;
                     segmentTime = time;
-                }
-                else {
+                } /*else if (spareSonar.getUltrasonicLevel() < 45 || segmentTime + 1000 < time) {
+                    navigateBlind(0, .3, heading);
+                    if (spareSonar.getUltrasonicLevel() < 45)
+                        segmentTime = time;
+                } */else {
                     if (isVisible)
                         allStop();
                     if (sideOfLine == -1) {//left
                         navigateBlind(180, .3, heading);
-                        if (posy + 20 < y)
+                        if (posx - 20 > x)
                             sideOfLine = 1;
                         if (line.alpha() > 20)
                             sideOfLine = 0;
                     }
                     if (sideOfLine == 1) {//right
                         navigateBlind(0, .3, heading);
-                        if (posy - 20 > y)
+                        if (posx + 20 < x)
                             sideOfLine = -1;
                         if (line.alpha() > 20)
                             sideOfLine = 0;
@@ -327,10 +414,10 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
             }
             case PRESCAN: {
                 if (sonar.getUltrasonicLevel() > 20) {
-                    navigateBlind(90, .35, heading);
+                    navigateBlind(90, .5, heading);
                     allStop();
                 } else if (sonar.getUltrasonicLevel() < 15) {
-                    navigateBlind(270, .35, heading);
+                    navigateBlind(270, .5, heading);
                     allStop();
                 } else {
                     control = RobotSteps.INIT_SCAN;
@@ -339,7 +426,7 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
             case INIT_SCAN: {
                 allStop();
                 if (realign(heading)) {
-                    if (line.alpha() < 10)
+                    if (line.alpha() < 20)
                         control = RobotSteps.INIT_REALIGN;
                     else
                         control = RobotSteps.SCAN;
@@ -348,11 +435,11 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
             }
             case SCAN: {
                 if (color.blue() < color.red()) {
-                    pusher.setPosition(1);
-                    beaconState = 1;
-                } else if (color.blue() > color.red()) {
                     pusher.setPosition(0);
                     beaconState = -1;
+                } else if (color.blue() > color.red()) {
+                    pusher.setPosition(1);
+                    beaconState = 1;
                 } else {
                     pusher.setPosition(.5);
                     beaconState = 0;
@@ -406,12 +493,14 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
             }
             case REVERSE: {
                 navigateBlind(270, .5, heading);
-                if (sonar.getUltrasonicLevel() > 35) {
+                if (sonar.getUltrasonicLevel() > 25) {
                     control = RobotSteps.REREALIGN;
-                    if (target2 == 2)
-                        control = RobotSteps.TURN_TO_SHOOT;
-                    if (target2 == 0)
-                        target2 = 2;
+                    if (target2 == 1) {
+                        control = RobotSteps.MOVE_TO_PARK;
+                        segmentTime = time;
+                    }
+                    if (target2 == 3)
+                        target2 = 1;
                     segmentTime = time;
                 }
                 break;
@@ -426,7 +515,7 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
             case INIT_MOVE_TO_BEACON2: {
                 pusher.setPosition(0);
                 scan(allTrackables.get(target2));
-                if (segmentTime + 500 < time) {
+                if (segmentTime < time) {
                     control = RobotSteps.MOVE_TO_BEACON2;
                     segmentTime = time;
                 }
@@ -434,62 +523,26 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
             }
             case MOVE_TO_BEACON2: {
                 boolean isVisible = scan(allTrackables.get(target2));
-                navigateBlind(5, .35, heading);
-                if ((isVisible && posx > 1170) || (line.alpha() > 10 && segmentTime + 1500 < time) || (spareSonar.getUltrasonicLevel() <= 65 && segmentTime + 3000 < time)) {
+                if (segmentTime + 1000 > time)
+                    navigateBlind(178, .7, heading);
+                else
+                    navigateBlind(178, .35, heading);
+
+                if ((isVisible && posx > 1170) || (line.alpha() > 20 && segmentTime + 800 < time) || (spareSonar.getUltrasonicLevel() <= 65 && segmentTime + 800 < time)) {
                     control = RobotSteps.INIT_ALIGN;
                     allStop();
                 }
                 break;
             }
-            case TURN_TO_SHOOT: {
-                rotateDegrees = 30;
-                if (realign(heading)) {
-                    control = RobotSteps.INIT_MOVE_TO_SHOOT;
+            /*case MOVE_TO_PARK: {
+                if (navigateTime(300, .5, 2000, heading)) {
                     allStop();
-                }
-                break;
-            }
-            case INIT_MOVE_TO_SHOOT: {
-                segmentTime = time;
-                control = RobotSteps.MOVE_TO_SHOOT;
-                segmentTime = time;
-                break;
-            }
-            case MOVE_TO_SHOOT: {
-                navigateBlind(180, .5, heading);
-                if (segmentTime + 1250 < time) {
-                    control = RobotSteps.INIT_SHOOT;
-                    allStop();
-                }
-                break;
-            }
-            case INIT_SHOOT: {
-                allStop();
-                shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                shooter.setTargetPosition(-1340);
-                shooterStartPos = 0;
-                if ((30000 - (time - startTime))/1000 > .5)
-                    control = RobotSteps.SHOOT;
-                else {
-                    control = RobotSteps.COMPLETE;
-                    shootAbort = true;
-                }
-                telemetry.addData("Status", "Setting up shooter...");
-                break;
-            }
-            case SHOOT: {
-                if (!shoot()) {
-                    segmentTime = time;
                     control = RobotSteps.COMPLETE;
                 }
-                telemetry.addData("Status", "Shooting particle...");
                 break;
-            }
+            }*/
             default: {//Hopefully this only runs when program ends
                 allStop();
-                if (shootAbort)
-                    telemetry.addData("WARNING", "Could not shoot due to lack of time!");
                 telemetry.addData("Status", "Switch is in default. Waiting for autonomous to end...");
             }
         }
@@ -632,8 +685,7 @@ public class BlueAutoBeaconsExperimental2 extends OpMode {
 
     public boolean realign (int h)
     {
-        if (Math.abs(h - startDegrees) < 10)
-            allStop();
+        allStop();
         if (h + 3 < startDegrees) {
             frontRight.setPower(-.08);
             frontLeft.setPower(-.08);
