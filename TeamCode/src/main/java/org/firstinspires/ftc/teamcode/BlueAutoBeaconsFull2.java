@@ -31,7 +31,7 @@ import java.util.List;
 @Autonomous (name = "Blue pos 1: Shoot 2/Press 2/Park SPEED", group = "Blue Autonomous")
 public class BlueAutoBeaconsFull2 extends OpMode {
     //Removing all possible delays and speeding up motors
-    public final int VERSION = 18;
+    public final int VERSION = 19;
 
     int target, startDegrees, targetDegrees, shooterStartPos, sideOfLine, beaconState, target2 = 0, pushCheck = 0, rotateDegrees = 0;
     int[] beaconPos1 = {1440, -485}, beaconPos2 = {1440, 740};//{x, y}
@@ -242,7 +242,10 @@ public class BlueAutoBeaconsFull2 extends OpMode {
             }
             case MOVE_TO_PUSH_POS: {
                 scan(allTrackables.get(target2));
-                navigateBlind(90, .4, heading);
+                if (target2 == 2)
+                    navigateBlind(100, .4, heading);
+                else
+                    navigateBlind(90, .4, heading);
                 if (sonar.getUltrasonicLevel() < 25)
                     allStop();
                 if (sonar.getUltrasonicLevel() > 0 && sonar.getUltrasonicLevel() < 20 + (heading * .5)) {
@@ -438,7 +441,7 @@ public class BlueAutoBeaconsFull2 extends OpMode {
                 else
                     navigateBlind(5, .35, heading);
 
-                if ((isVisible && posx > 1170) || (line.alpha() > 10 && segmentTime + 800 < time) || (spareSonar.getUltrasonicLevel() <= 65 && segmentTime + 800 < time)) {
+                if ((isVisible && posx > 1170) || (line.alpha() > 10 && segmentTime + 800 < time) || (spareSonar.getUltrasonicLevel() <= 75 && segmentTime + 600 < time)) {
                     control = RobotSteps.INIT_ALIGN;
                     allStop();
                 }
@@ -525,7 +528,7 @@ public class BlueAutoBeaconsFull2 extends OpMode {
                 break;
             }
             case MOVE_TO_PARK: {
-                if (navigateTime(180, .5, 1700, heading)) {
+                if (navigateTime(180, .5, 2200, heading)) {
                     allStop();
                     control = RobotSteps.COMPLETE;
                 }

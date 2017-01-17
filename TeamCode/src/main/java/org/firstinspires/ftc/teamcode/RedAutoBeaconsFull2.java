@@ -321,7 +321,11 @@ public class RedAutoBeaconsFull2 extends OpMode {
             }
             case MOVE_TO_PUSH_POS: {
                 scan(allTrackables.get(target2));
-                navigateBlind(90, .4, heading);
+                if (target2 == 1)
+                    navigateBlind(80, .4, heading);
+                else
+                    navigateBlind(90, .4, heading);
+
                 if (sonar.getUltrasonicLevel() < 25)
                     allStop();
                 if (sonar.getUltrasonicLevel() > 0 && sonar.getUltrasonicLevel() < 20 + (heading * .5)) {
@@ -381,11 +385,11 @@ public class RedAutoBeaconsFull2 extends OpMode {
                 if (sideOfLine == 0) {
                     control = RobotSteps.PRESCAN;
                     segmentTime = time;
-                } else if (spareSonar.getUltrasonicLevel() < 45 || segmentTime + 1000 < time) {
+                } /*else if (spareSonar.getUltrasonicLevel() < 45 || segmentTime + 1000 < time) {
                     navigateBlind(0, .3, heading);
                     if (spareSonar.getUltrasonicLevel() < 45)
                         segmentTime = time;
-                } else {
+                } */else {
                     if (isVisible)
                         allStop();
                     if (sideOfLine == -1) {//left
