@@ -53,7 +53,8 @@ public class RedPos2Shoot2Cap extends OpMode {
 
     public static final String TAG = "Vuforia Sample";
 
-    public enum RobotSteps {INIT_START, DELAY, INIT_MOVE, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, RETURN, PARK, ALL_DONE, SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_DOS,SPIN2, ALIGN, DELAY2};
+    public enum RobotSteps {INIT_START, DELAY, INIT_MOVE, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, RETURN, PARK, ALL_DONE,
+        SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_DOS,SPIN2, ALIGN, DELAY2, DELAY_FOR_SHOOT};
     RobotSteps control = RobotSteps.INIT_START;
     OpenGLMatrix lastLocation = null;
     String loopNumber;
@@ -166,9 +167,17 @@ public class RedPos2Shoot2Cap extends OpMode {
                 break;
             }
             case MOVE_TO_SHOOT: {//move into position to shoot (timed move)
-                if (navigateTime(180, .6, 1300, heading))
+                if (navigateTime(180, .6, 1500, heading)) {
+                    control = RobotSteps.DELAY_FOR_SHOOT;
+                    segmentTime = time;
+                }
+                telemetry.addData("Status", "Moving for 1.5 seconds...");
+                break;
+            }
+            case DELAY_FOR_SHOOT: {
+                allStop();
+                if (segmentTime + 500 < time)
                     control = RobotSteps.INIT_SHOOT;
-                telemetry.addData("Status", "Moving for 1 seconds...");
                 break;
             }
             case INIT_SHOOT: {//Setup for shoot
@@ -384,11 +393,7 @@ public class RedPos2Shoot2Cap extends OpMode {
 
     public double correct(int h)
     {
-        if (h > startDegrees + 10)
-            return .1;
-        if (h < startDegrees - 10)
-            return -.1;
-        return 0;
+        return (h * .01)/2;
     }
 
     public boolean shoot() //Waiting for launcher to be built, no code implemented

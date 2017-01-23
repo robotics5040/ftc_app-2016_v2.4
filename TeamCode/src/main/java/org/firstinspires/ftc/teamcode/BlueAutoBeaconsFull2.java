@@ -609,18 +609,18 @@ public class BlueAutoBeaconsFull2 extends OpMode {
     {
         if (direction == 'r' && h - deg < 0)
         {
-            frontRight.setPower(-.15);
-            frontLeft.setPower(-.15);
-            backRight.setPower(-.15);
-            backLeft.setPower(-.15);
+            frontRight.setPower(-.2);
+            frontLeft.setPower(-.2);
+            backRight.setPower(-.2);
+            backLeft.setPower(-.2);
             return false;
         }
         else if (direction == 'l' && h - deg > 0)
         {
-            frontRight.setPower(.15);
-            frontLeft.setPower(.15);
-            backRight.setPower(.15);
-            backLeft.setPower(.15);
+            frontRight.setPower(.2);
+            frontLeft.setPower(.2);
+            backRight.setPower(.2);
+            backLeft.setPower(.2);
             return false;
         }
         return true;
@@ -683,16 +683,16 @@ public class BlueAutoBeaconsFull2 extends OpMode {
         if (Math.abs(h - startDegrees) < 10)
             allStop();
         if (h + 3 < startDegrees) {
-            frontRight.setPower(-.08);
-            frontLeft.setPower(-.08);
-            backRight.setPower(-.08);
-            backLeft.setPower(-.08);
+            frontRight.setPower(-.09);
+            frontLeft.setPower(-.09);
+            backRight.setPower(-.09);
+            backLeft.setPower(-.09);
             segmentTime = time;
         } else if (h - 3 > startDegrees) {
-            frontRight.setPower(.08);
-            frontLeft.setPower(.08);
-            backRight.setPower(.08);
-            backLeft.setPower(.08);
+            frontRight.setPower(.09);
+            frontLeft.setPower(.09);
+            backRight.setPower(.09);
+            backLeft.setPower(.09);
             segmentTime = time;
         } else {
             allStop();
