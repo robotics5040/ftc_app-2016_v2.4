@@ -62,7 +62,7 @@ public class RedAutoBeaconsFull2 extends OpMode {
     public enum RobotSteps {INIT_START, DELAY, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, INIT_MOVE_TO_BEACON, MOVE_TO_BEACON,
         INIT_ALIGN, ALIGN, INIT_MOVE_TO_PUSH_POS, MOVE_TO_PUSH_POS, INIT_REALIGN, REALIGN, INIT_SCAN, SCAN, INIT_PUSH,
         PUSH, CHECK_PUSH, REVERSE, REREALIGN, INIT_MOVE_TO_BEACON2, MOVE_TO_BEACON2, COMPLETE, RANGE_CHECK, PRESCAN,
-        SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_TWO, MOVE_TO_PARK};
+        SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_TWO, MOVE_TO_PARK, CHECK_WALL};
     RobotSteps control = RobotSteps.INIT_START;
     OpenGLMatrix lastLocation = null;
     String loopNumber;
@@ -247,10 +247,21 @@ public class RedAutoBeaconsFull2 extends OpMode {
                 }
                 if ((sonar.getUltrasonicLevel() > 0 && sonar.getUltrasonicLevel() < 45) || line.alpha() > 20) {
                     segmentTime = time;
-                    control = RobotSteps.INIT_ALIGN;
+                    control = RobotSteps.CHECK_WALL;
                     allStop();
                 }
                 telemetry.addData("Status", "Moving to beacon...");
+                break;
+            }
+            case CHECK_WALL: {
+                allStop();
+                if (segmentTime + 500 < time) {
+                    if (sonar.getUltrasonicLevel() > 0 && sonar.getUltrasonicLevel() < 45) {
+                        control = RobotSteps.INIT_ALIGN;
+                    } else {
+                        control = RobotSteps.MOVE_TO_BEACON;
+                    }
+                }
                 break;
             }
             case INIT_ALIGN: {
