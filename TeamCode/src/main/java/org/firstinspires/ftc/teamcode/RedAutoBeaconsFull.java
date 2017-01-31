@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -53,7 +55,7 @@ public class RedAutoBeaconsFull extends OpMode {
     float mmFTCFieldWidth;
     ColorSensor color;
     ColorSensor line;
-    UltrasonicSensor sonar;
+    ModernRoboticsI2cRangeSensor sonar;
     UltrasonicSensor spareSonar;
     Servo pusher;
 
@@ -62,7 +64,7 @@ public class RedAutoBeaconsFull extends OpMode {
     public enum RobotSteps {INIT_START, DELAY, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, INIT_MOVE_TO_BEACON, MOVE_TO_BEACON,
         INIT_ALIGN, ALIGN, INIT_MOVE_TO_PUSH_POS, MOVE_TO_PUSH_POS, INIT_REALIGN, REALIGN, INIT_SCAN, SCAN, INIT_PUSH,
         PUSH, CHECK_PUSH, REVERSE, REREALIGN, INIT_MOVE_TO_BEACON2, MOVE_TO_BEACON2, COMPLETE, RANGE_CHECK, PRESCAN,
-        SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_TWO};
+        SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_TWO, CHECK_WALL};
     RobotSteps control = RobotSteps.INIT_START;
     OpenGLMatrix lastLocation = null;
     String loopNumber;
@@ -75,7 +77,7 @@ public class RedAutoBeaconsFull extends OpMode {
         backRight = hardwareMap.dcMotor.get("backRight");
         shooter = hardwareMap.dcMotor.get("shooter");
         gyro = hardwareMap.gyroSensor.get("gyro");
-        sonar = hardwareMap.ultrasonicSensor.get("sonar");
+        sonar = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "sonar");
         spareSonar = hardwareMap.ultrasonicSensor.get("sonar2");
         color = hardwareMap.colorSensor.get("color");
         I2cAddr newAddress = new I2cAddr(0x1f);
@@ -245,12 +247,23 @@ public class RedAutoBeaconsFull extends OpMode {
                 if (isVisible && posx > beaconPos1[0]) {
                     navigateBlind(90, .7, heading);
                 }
-                if ((sonar.getUltrasonicLevel() > 0 && sonar.getUltrasonicLevel() < 45) || line.alpha() > 20) {
+                if ((sonar.cmUltrasonic() > 0 && sonar.cmUltrasonic() < 45) || line.alpha() > 20) {
                     segmentTime = time;
-                    control = RobotSteps.INIT_ALIGN;
+                    control = RobotSteps.CHECK_WALL;
                     allStop();
                 }
                 telemetry.addData("Status", "Moving to beacon...");
+                break;
+            }
+            case CHECK_WALL: {
+                allStop();
+                if (segmentTime + 500 < time) {
+                    if (sonar.cmUltrasonic() > 0 && sonar.cmUltrasonic() < 45) {
+                        control = RobotSteps.INIT_ALIGN;
+                    } else {
+                        control = RobotSteps.MOVE_TO_BEACON;
+                    }
+                }
                 break;
             }
             case INIT_ALIGN: {
@@ -321,10 +334,14 @@ public class RedAutoBeaconsFull extends OpMode {
             }
             case MOVE_TO_PUSH_POS: {
                 scan(allTrackables.get(target2));
-                navigateBlind(90, .5, heading);
-                if (sonar.getUltrasonicLevel() < 25)
+                if (target2 == 1)
+                    navigateBlind(80, .4, heading);
+                else
+                    navigateBlind(90, .4, heading);
+
+                if (sonar.cmUltrasonic() < 25)
                     allStop();
-                if (sonar.getUltrasonicLevel() > 0 && sonar.getUltrasonicLevel() < 20 + (heading * .5)) {
+                if (sonar.cmUltrasonic() > 0 && sonar.cmUltrasonic() < 20 + (heading * .5)) {
                     allStop();
                     control = RobotSteps.RANGE_CHECK;
                 }
@@ -332,7 +349,7 @@ public class RedAutoBeaconsFull extends OpMode {
             }
             case RANGE_CHECK: {
                 scan(allTrackables.get(target2));
-                if (sonar.getUltrasonicLevel() <= 15 && segmentTime + 500 > time) {
+                if (sonar.cmUltrasonic() <= 15 && segmentTime + 500 > time) {
                     navigateBlind(270, .3, heading);
                 } else {
                     control = RobotSteps.INIT_REALIGN;
@@ -366,7 +383,7 @@ public class RedAutoBeaconsFull extends OpMode {
                     else
                         sideOfLine = 1;
                     control = RobotSteps.REALIGN;
-                    segmentTime = time;
+                    segmentTime = time + 1000;
                 }
                 telemetry.addData("Status", "Realigning...");
                 break;
@@ -381,8 +398,11 @@ public class RedAutoBeaconsFull extends OpMode {
                 if (sideOfLine == 0) {
                     control = RobotSteps.PRESCAN;
                     segmentTime = time;
-                }
-                else {
+                } /*else if (spareSonar.cmUltrasonic() < 45 || segmentTime + 1000 < time) {
+                    navigateBlind(0, .3, heading);
+                    if (spareSonar.cmUltrasonic() < 45)
+                        segmentTime = time;
+                } */else {
                     if (isVisible)
                         allStop();
                     if (sideOfLine == -1) {//left
@@ -404,10 +424,10 @@ public class RedAutoBeaconsFull extends OpMode {
                 break;
             }
             case PRESCAN: {
-                if (sonar.getUltrasonicLevel() > 20) {
+                if (sonar.cmUltrasonic() > 20) {
                     navigateBlind(90, .5, heading);
                     allStop();
-                } else if (sonar.getUltrasonicLevel() < 15) {
+                } else if (sonar.cmUltrasonic() < 15) {
                     navigateBlind(270, .5, heading);
                     allStop();
                 } else {
@@ -444,15 +464,15 @@ public class RedAutoBeaconsFull extends OpMode {
                 if (segmentTime + 500 < time) {
                     control = RobotSteps.PUSH;
                     segmentTime = time;
-                    if (sonar.getUltrasonicLevel() > 20)
+                    if (sonar.cmUltrasonic() > 20)
                         pushCheck = 1;
-                    if (sonar.getUltrasonicLevel() < 15)
+                    if (sonar.cmUltrasonic() < 15)
                         pushCheck = -1;
                 }
                 break;
             }
             case CHECK_PUSH: {
-                if (sonar.getUltrasonicLevel() > 15 && sonar.getUltrasonicLevel() < 20)
+                if (sonar.cmUltrasonic() > 15 && sonar.cmUltrasonic() < 20)
                     pushCheck = 0;
 
                 if (pushCheck == 1) {
@@ -484,10 +504,12 @@ public class RedAutoBeaconsFull extends OpMode {
             }
             case REVERSE: {
                 navigateBlind(270, .5, heading);
-                if (sonar.getUltrasonicLevel() > 25) {
+                if (sonar.cmUltrasonic() > 25) {
                     control = RobotSteps.REREALIGN;
-                    if (target2 == 1)
+                    if (target2 == 1) {
                         control = RobotSteps.COMPLETE;
+                        segmentTime = time;
+                    }
                     if (target2 == 3)
                         target2 = 1;
                     segmentTime = time;

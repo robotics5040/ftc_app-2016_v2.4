@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -49,8 +50,9 @@ public class OmnibotAutoTest extends OpMode {
     double posx, posy, posz, startx, starty;
     float mmFTCFieldWidth;
     ColorSensor color, line;
-    UltrasonicSensor sonar;
+    ModernRoboticsI2cRangeSensor sonar;
     UltrasonicSensor spareSonar;
+    UltrasonicSensor spareSonar2;
 
     public static final String TAG = "Vuforia Sample";
 
@@ -71,8 +73,10 @@ public class OmnibotAutoTest extends OpMode {
         line.setI2cAddress(newAddress);
         color.enableLed(false);
         line.enableLed(true);
-        sonar = hardwareMap.ultrasonicSensor.get("sonar");
+        sonar = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "sonar");
+        sonar.setI2cAddress(I2cAddr.create8bit(0x28));
         spareSonar = hardwareMap.ultrasonicSensor.get("sonar2");
+        spareSonar2 = hardwareMap.ultrasonicSensor.get("sonar3");
 
         shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -246,8 +250,13 @@ public class OmnibotAutoTest extends OpMode {
         telemetry.addData("Line", line.argb());
         telemetry.addData("Shooter Degrees", shooter.getCurrentPosition());
         telemetry.addData("Target Degrees", targetDegrees);
-        telemetry.addData("Sonar", sonar.getUltrasonicLevel());
-        telemetry.addData("Spare Sonar", spareSonar.getUltrasonicLevel());
+        telemetry.addData("Sonar", sonar.cmUltrasonic());
+        telemetry.addData("Spare Sonar 1", spareSonar.getUltrasonicLevel());
+        telemetry.addData("Spare Sonar 2", spareSonar2.getUltrasonicLevel());
+        telemetry.addData("", "");
+        telemetry.addData("line mem", line.getI2cAddress().get7Bit());
+        telemetry.addData("color mem", color.getI2cAddress().get7Bit());
+        telemetry.addData("sonar mem", sonar.getI2cAddress().get7Bit());
 
         if (lastLocation != null) {
             VectorF trans = lastLocation.getTranslation();

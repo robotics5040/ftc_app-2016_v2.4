@@ -45,16 +45,12 @@ public class RedPos2Shoot2Cap extends OpMode {
     List<VuforiaTrackable> allTrackables;
     double posx, posy, startx, starty, targetDistance;
     float mmFTCFieldWidth;
-    ColorSensor color;
-    ColorSensor line;
-    UltrasonicSensor sonar;
-    Servo pusher;
     boolean lineUsed = false;
 
     public static final String TAG = "Vuforia Sample";
 
     public enum RobotSteps {INIT_START, DELAY, INIT_MOVE, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, RETURN, PARK, ALL_DONE,
-        SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_DOS,SPIN2, ALIGN, DELAY2, DELAY_FOR_SHOOT};
+        SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_DOS,SPIN2, ALIGN, DELAY2, DELAY_FOR_SHOOT, STRAFE};
     RobotSteps control = RobotSteps.INIT_START;
     OpenGLMatrix lastLocation = null;
     String loopNumber;
@@ -67,15 +63,6 @@ public class RedPos2Shoot2Cap extends OpMode {
         backRight = hardwareMap.dcMotor.get("backRight");
         shooter = hardwareMap.dcMotor.get("shooter");
         gyro = hardwareMap.gyroSensor.get("gyro");
-        sonar = hardwareMap.ultrasonicSensor.get("sonar");
-        color = hardwareMap.colorSensor.get("color");
-        I2cAddr newAddress = new I2cAddr(0x1f);
-        line = hardwareMap.colorSensor.get("line");
-        line.setI2cAddress(newAddress);
-        pusher = hardwareMap.servo.get("pusher");
-        pusher.setPosition(0);
-        color.enableLed(false);
-        line.enableLed(true);
 
         gyro.calibrate();
 
@@ -154,7 +141,7 @@ public class RedPos2Shoot2Cap extends OpMode {
                 break;
             }
             case DELAY: {//Initial delay, set control to 2 to skip delay
-                if (segmentTime + 10000 < time) //set to 3 seconds for testing
+                if (segmentTime + 20000 < time) //set to 3 seconds for testing
                     control = RobotSteps.INIT_MOVE;
                 telemetry.addData("Status", "Waiting to start...");
                 break;
@@ -233,9 +220,14 @@ public class RedPos2Shoot2Cap extends OpMode {
             }
 
             case RETURN: {//move forward to knock off cap ball
-                if (navigateTime(180, .6, 1700, heading))
-                    control = RobotSteps.DELAY2;
+                if (navigateTime(180, .6, 1000, heading))
+                    control = RobotSteps.STRAFE;
                     telemetry.addData("Status", "Made it to the delay case");
+                break;
+            }
+            case STRAFE: {
+                if (navigateTime(270, .6, 500, heading))
+                    control = RobotSteps.DELAY2;
                 break;
             }
             /*case DELAY2: {//Initial delay, set control to 2 to skip delay
@@ -277,7 +269,6 @@ public class RedPos2Shoot2Cap extends OpMode {
         telemetry.addData("Timer", time - segmentTime);
         telemetry.addData("Control", control);
         telemetry.addData("Heading", heading);
-        telemetry.addData("Sonar", sonar.getUltrasonicLevel());
         telemetry.addData("Sweeper Power",sweeper.getPower());
         telemetry.addData("Sweeper Position",sweeper.getCurrentPosition());
 

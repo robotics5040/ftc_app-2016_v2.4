@@ -20,7 +20,7 @@ public class CompetitionOmnibot4 extends OpMode {
     String loopNumber;
     //program variables
     int controlMode = 1, sweep = 0, shooterResetPos, sweeperResetPos, shootCount = 0;
-    boolean shoot = false, reset = false, motorReset = false, aPressed = true, manualRest = false;
+    boolean shoot = false, reset = false, motorReset = false, aPressed = true, manualRest = false, sweepResetCheck = true;
     //gyro thingies
     long segmentTime;
     GyroSensor gyro;
@@ -94,18 +94,16 @@ public class CompetitionOmnibot4 extends OpMode {
             controlMode = 2;
 
         //power multipliers - so that gamepad controls do not function at 100%
-        if (gamepad1.right_bumper)
+        if (!gamepad1.right_bumper)
         {
-            rx *= .5;
-            ry *= -.5;
-            lx *= .5;
-            ly *= .5;
-        }
-        else {
             rx *= .75;
             ry *= -.75;
             lx *= .75;
             ly *= .75;
+        }
+        else
+        {
+            ry *= -1;
         }
         //                  direction                               rotation
         //average of the joystick inputs + rotation
@@ -120,6 +118,7 @@ public class CompetitionOmnibot4 extends OpMode {
         }
         if ((gamepad2.dpad_left || gamepad2.dpad_right) && !manualRest) {
             sweep = 0;
+            sweepResetCheck = false;
         }
         if (gamepad2.dpad_up && !manualRest) {
             sweeper.setPower(1);
@@ -168,8 +167,19 @@ public class CompetitionOmnibot4 extends OpMode {
         telemetry.addData("Output of right Stick", gamepad2.right_stick_y);
         telemetry.addData("Output of left bumper", gamepad2.left_bumper);
         telemetry.addData("Loop Number", loopNumber);
-        if ((sweeper.getCurrentPosition() % 720 >= 50 && sweeper.getCurrentPosition() % 720 <= 670) && sweep == 0 && !manualRest)
-            sweeper.setPower(.06);
+        if (sweep == 0 && !manualRest/* && !sweepResetCheck*/) {
+            int sr = sweeper.getCurrentPosition() % 720;
+            if (sr < 0)
+                sr = 720 - Math.abs(sr);
+            if (sr <= 100 || sr >= 620) {
+                sweeper.setPower(0);
+                sweepResetCheck = true;
+            } else if (sr <= 360) {
+                sweeper.setPower(-.08);
+            } else if (sr > 360) {
+                sweeper.setPower(.15);
+            }
+        }
         else if (sweep == 0 && !manualRest)
             sweeper.setPower(0);
 
@@ -197,7 +207,7 @@ public class CompetitionOmnibot4 extends OpMode {
             shooterResetPos = 0;
             shooter.setTargetPosition(0);
             sweeper.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            sweeper.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            sweeper.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             sweep = 0;
         }
 

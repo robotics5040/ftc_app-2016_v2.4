@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -52,7 +53,8 @@ public class BlueAutoBeaconsFull2 extends OpMode {
     float mmFTCFieldWidth;
     ColorSensor color;
     ColorSensor line;
-    UltrasonicSensor sonar, spareSonar;
+    ModernRoboticsI2cRangeSensor sonar;
+    UltrasonicSensor spareSonar;
     Servo pusher;
 
     public static final String TAG = "Vuforia Sample";
@@ -74,7 +76,7 @@ public class BlueAutoBeaconsFull2 extends OpMode {
         backRight = hardwareMap.dcMotor.get("backRight");
         shooter = hardwareMap.dcMotor.get("shooter");
         gyro = hardwareMap.gyroSensor.get("gyro");
-        sonar = hardwareMap.ultrasonicSensor.get("sonar");
+        sonar = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "sonar");
         spareSonar = hardwareMap.ultrasonicSensor.get("sonar2");
         color = hardwareMap.colorSensor.get("color");
         I2cAddr newAddress = new I2cAddr(0x1f);
@@ -199,7 +201,7 @@ public class BlueAutoBeaconsFull2 extends OpMode {
                 if (isVisible && posx > beaconPos1[0]) {
                     navigateBlind(90, .7, heading);
                 }
-                if ((segmentTime + 1000 < time && sonar.getUltrasonicLevel() > 0 && sonar.getUltrasonicLevel() < 45) || line.alpha() > 20) {
+                if ((segmentTime + 1000 < time && sonar.cmUltrasonic() > 0 && sonar.cmUltrasonic() < 45) || line.alpha() > 20) {
                     segmentTime = time;
                     control = RobotSteps.INIT_ALIGN;
                     allStop();
@@ -246,9 +248,9 @@ public class BlueAutoBeaconsFull2 extends OpMode {
                     navigateBlind(100, .4, heading);
                 else
                     navigateBlind(90, .4, heading);
-                if (sonar.getUltrasonicLevel() < 25)
+                if (sonar.cmUltrasonic() < 25)
                     allStop();
-                if (sonar.getUltrasonicLevel() > 0 && sonar.getUltrasonicLevel() < 20 + (heading * .5)) {
+                if (sonar.cmUltrasonic() > 0 && sonar.cmUltrasonic() < 20 + (heading * .5)) {
                     allStop();
                     control = RobotSteps.RANGE_CHECK;
                 }
@@ -256,7 +258,7 @@ public class BlueAutoBeaconsFull2 extends OpMode {
             }
             case RANGE_CHECK: {
                 scan(allTrackables.get(target2));
-                if (sonar.getUltrasonicLevel() <= 15 && segmentTime + 500 > time) {
+                if (sonar.cmUltrasonic() <= 15 && segmentTime + 500 > time) {
                     navigateBlind(270, .3, heading);
                 } else {
                     control = RobotSteps.INIT_REALIGN;
@@ -328,10 +330,10 @@ public class BlueAutoBeaconsFull2 extends OpMode {
                 break;
             }
             case PRESCAN: {
-                if (sonar.getUltrasonicLevel() > 20) {
+                if (sonar.cmUltrasonic() > 20) {
                     navigateBlind(90, .5, heading);
                     allStop();
-                } else if (sonar.getUltrasonicLevel() < 15) {
+                } else if (sonar.cmUltrasonic() < 15) {
                     navigateBlind(270, .5, heading);
                     allStop();
                 } else {
@@ -368,15 +370,15 @@ public class BlueAutoBeaconsFull2 extends OpMode {
                 if (segmentTime + 500 < time) {
                     control = RobotSteps.PUSH;
                     segmentTime = time;
-                    if (sonar.getUltrasonicLevel() > 20)
+                    if (sonar.cmUltrasonic() > 20)
                         pushCheck = 1;
-                    if (sonar.getUltrasonicLevel() < 15)
+                    if (sonar.cmUltrasonic() < 15)
                         pushCheck = -1;
                 }
                 break;
             }
             case CHECK_PUSH: {
-                if (sonar.getUltrasonicLevel() > 15 && sonar.getUltrasonicLevel() < 20)
+                if (sonar.cmUltrasonic() > 15 && sonar.cmUltrasonic() < 20)
                     pushCheck = 0;
 
                 if (pushCheck == 1) {
@@ -408,7 +410,7 @@ public class BlueAutoBeaconsFull2 extends OpMode {
             }
             case REVERSE: {
                 navigateBlind(270, .5, heading);
-                if (sonar.getUltrasonicLevel() > 25) {
+                if (sonar.cmUltrasonic() > 30 && sonar.cmUltrasonic() != 255) {
                     control = RobotSteps.REREALIGN;
                     if (target2 == 2)
                         control = RobotSteps.TURN_TO_SHOOT;
@@ -448,7 +450,7 @@ public class BlueAutoBeaconsFull2 extends OpMode {
                 break;
             }
             case TURN_TO_SHOOT: {
-                rotateDegrees = 40;
+                rotateDegrees = 30;
                 if (realign(heading)) {
                     control = RobotSteps.INIT_MOVE_TO_SHOOT;
                     allStop();
@@ -680,19 +682,19 @@ public class BlueAutoBeaconsFull2 extends OpMode {
 
     public boolean realign (int h)
     {
-        if (Math.abs(h - startDegrees) < 10)
+        if (Math.abs(h - startDegrees) < 20)
             allStop();
         if (h + 3 < startDegrees) {
-            frontRight.setPower(-.09);
-            frontLeft.setPower(-.09);
-            backRight.setPower(-.09);
-            backLeft.setPower(-.09);
+            frontRight.setPower(-.08);
+            frontLeft.setPower(-.08);
+            backRight.setPower(-.08);
+            backLeft.setPower(-.08);
             segmentTime = time;
         } else if (h - 3 > startDegrees) {
-            frontRight.setPower(.09);
-            frontLeft.setPower(.09);
-            backRight.setPower(.09);
-            backLeft.setPower(.09);
+            frontRight.setPower(.08);
+            frontLeft.setPower(.08);
+            backRight.setPower(.08);
+            backLeft.setPower(.08);
             segmentTime = time;
         } else {
             allStop();
