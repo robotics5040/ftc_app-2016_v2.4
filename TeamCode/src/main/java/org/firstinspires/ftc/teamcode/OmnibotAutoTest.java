@@ -36,7 +36,7 @@ import java.util.List;
 //change
 @Autonomous(name = "Sensor Read", group = "Testing")
 public class OmnibotAutoTest extends OpMode {
-    int control = 0, degrees = 0, previousHeading = 0, heading, trueHeading, target, start, startDegrees, targetDegrees;
+    int control = 0, degrees = 0, previousHeading = 0, heading, trueHeading, target, start, startDegrees, targetDegrees, rotateDegrees = 0;
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
@@ -49,7 +49,7 @@ public class OmnibotAutoTest extends OpMode {
     List<VuforiaTrackable> allTrackables;
     double posx, posy, posz, startx, starty;
     float mmFTCFieldWidth;
-    ColorSensor color, line;
+    ColorSensor color, line, lineLeft, lineRight;
     ModernRoboticsI2cRangeSensor sonar;
     UltrasonicSensor spareSonar;
     UltrasonicSensor spareSonar2;
@@ -68,11 +68,23 @@ public class OmnibotAutoTest extends OpMode {
         gyro = hardwareMap.gyroSensor.get("gyro");
         gyro.calibrate();
         color = hardwareMap.colorSensor.get("color");
-        I2cAddr newAddress = new I2cAddr(0x1f);
+
+        I2cAddr lineAddress = new I2cAddr(0x1f);
         line = hardwareMap.colorSensor.get("line");
-        line.setI2cAddress(newAddress);
+        line.setI2cAddress(lineAddress);
+
+        //I2cAddr lineAddressLeft = new I2cAddr(0x20);
+        lineLeft = hardwareMap.colorSensor.get("lineLeft");
+        lineLeft.setI2cAddress(I2cAddr.create8bit(0x40));
+
+        //I2cAddr lineAddressRight = new I2cAddr(0x21);
+        lineRight = hardwareMap.colorSensor.get("lineRight");
+        lineRight.setI2cAddress(I2cAddr.create8bit(0x42));
+
         color.enableLed(false);
         line.enableLed(true);
+        lineLeft.enableLed(true);
+        lineRight.enableLed(true);
         sonar = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "sonar");
         sonar.setI2cAddress(I2cAddr.create8bit(0x28));
         spareSonar = hardwareMap.ultrasonicSensor.get("sonar2");
@@ -188,9 +200,9 @@ public class OmnibotAutoTest extends OpMode {
 
         time = System.currentTimeMillis();
 
-        heading = gyro.getHeading();
-        trueHeading = degrees + heading;
-        checkHeading();
+        int heading = gyro.getHeading() - rotateDegrees;
+        if (heading + rotateDegrees > 180)
+            heading -= 360;
 
         switch (control) {
             case 0: {
@@ -247,14 +259,18 @@ public class OmnibotAutoTest extends OpMode {
         telemetry.addData("Line Blue", line.blue());
         telemetry.addData("Line Green", line.green());
         telemetry.addData("Line Alpha", line.alpha());
-        telemetry.addData("Line", line.argb());
+        //telemetry.addData("Line", line.argb());
+        telemetry.addData("Line Left", lineLeft.alpha());
+        telemetry.addData("Line Right", lineRight.alpha());
         telemetry.addData("Shooter Degrees", shooter.getCurrentPosition());
         telemetry.addData("Target Degrees", targetDegrees);
-        telemetry.addData("Sonar", sonar.cmUltrasonic());
+        telemetry.addData("Sonar", (double) sonar.cmUltrasonic() + heading*.1);
         telemetry.addData("Spare Sonar 1", spareSonar.getUltrasonicLevel());
         telemetry.addData("Spare Sonar 2", spareSonar2.getUltrasonicLevel());
         telemetry.addData("", "");
-        telemetry.addData("line mem", line.getI2cAddress().get7Bit());
+        telemetry.addData("line mem", line.getI2cAddress().get8Bit());
+        telemetry.addData("line left mem", lineLeft.getI2cAddress().get8Bit());
+        telemetry.addData("line right mem", lineRight.getI2cAddress().get8Bit());
         telemetry.addData("color mem", color.getI2cAddress().get7Bit());
         telemetry.addData("sonar mem", sonar.getI2cAddress().get7Bit());
 

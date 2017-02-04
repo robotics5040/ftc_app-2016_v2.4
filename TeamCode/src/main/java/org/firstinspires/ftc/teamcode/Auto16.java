@@ -47,11 +47,6 @@ public class Auto16 extends OpMode {
     List<VuforiaTrackable> allTrackables;
     double posx, posy, startx, starty, targetDistance;
     float mmFTCFieldWidth;
-    ColorSensor color;
-    ColorSensor line;
-    UltrasonicSensor sonar;
-    Servo pusher;
-    boolean lineUsed = false;
 
     public static final String TAG = "Vuforia Sample";
 
@@ -68,15 +63,6 @@ public class Auto16 extends OpMode {
         backRight = hardwareMap.dcMotor.get("backRight");
         shooter = hardwareMap.dcMotor.get("shooter");
         gyro = hardwareMap.gyroSensor.get("gyro");
-        sonar = hardwareMap.ultrasonicSensor.get("sonar");
-        color = hardwareMap.colorSensor.get("color");
-        I2cAddr newAddress = new I2cAddr(0x1f);
-        line = hardwareMap.colorSensor.get("line");
-        line.setI2cAddress(newAddress);
-        pusher = hardwareMap.servo.get("pusher");
-        pusher.setPosition(0);
-        color.enableLed(false);
-        line.enableLed(true);
 
         gyro.calibrate();
 
@@ -243,7 +229,6 @@ public class Auto16 extends OpMode {
         telemetry.addData("Timer", time - segmentTime);
         telemetry.addData("Control", control);
         telemetry.addData("Heading", heading);
-        telemetry.addData("Sonar", sonar.getUltrasonicLevel());
         telemetry.addData("Sweeper Power",sweeper.getPower());
         telemetry.addData("Sweeper Position",sweeper.getCurrentPosition());
 
