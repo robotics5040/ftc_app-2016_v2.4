@@ -52,7 +52,7 @@ public class RedAutoBeaconsFull3 extends OpMode {
     double posx, posy, startx, starty, targetDistance;
     float mmFTCFieldWidth;
     ColorSensor color;
-    ColorSensor line, lineLeft, lineRight;
+    ColorSensor line/*, lineLeft, lineRight*/;
     ModernRoboticsI2cRangeSensor sonar;
     UltrasonicSensor spareSonar;
     Servo pusher;
@@ -62,7 +62,7 @@ public class RedAutoBeaconsFull3 extends OpMode {
     public enum RobotSteps {INIT_START, DELAY, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, INIT_MOVE_TO_BEACON, MOVE_TO_BEACON,
         INIT_ALIGN, ALIGN, INIT_MOVE_TO_PUSH_POS, MOVE_TO_PUSH_POS, INIT_REALIGN, REALIGN, INIT_SCAN, SCAN, INIT_PUSH,
         PUSH, CHECK_PUSH, REVERSE, REREALIGN, INIT_MOVE_TO_BEACON2, MOVE_TO_BEACON2, COMPLETE, RANGE_CHECK, PRESCAN,
-        SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_TWO, MOVE_TO_PARK, CHECK_WALL, INIT_MOVE_TO_PARK};
+        SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_TWO, MOVE_TO_PARK, CHECK_WALL, INIT_MOVE_TO_PARK, LOOK_FOR_BEACON_2};
     RobotSteps control = RobotSteps.INIT_START;
     OpenGLMatrix lastLocation = null;
     String loopNumber;
@@ -85,13 +85,13 @@ public class RedAutoBeaconsFull3 extends OpMode {
         line = hardwareMap.colorSensor.get("line");
         line.setI2cAddress(colorAddress);
 
-        //I2cAddr lineAddressLeft = new I2cAddr(0x20);
+        /*//I2cAddr lineAddressLeft = new I2cAddr(0x20);
         lineLeft = hardwareMap.colorSensor.get("lineLeft");
         lineLeft.setI2cAddress(I2cAddr.create8bit(0x40));
 
         //I2cAddr lineAddressRight = new I2cAddr(0x21);
         lineRight = hardwareMap.colorSensor.get("lineRight");
-        lineRight.setI2cAddress(I2cAddr.create8bit(0x42));
+        lineRight.setI2cAddress(I2cAddr.create8bit(0x42));*/
 
         pusher = hardwareMap.servo.get("pusher");
         pusher.setPosition(0);
@@ -348,14 +348,14 @@ public class RedAutoBeaconsFull3 extends OpMode {
                     if (detectMethod == 1 || detectMethod == 0 || detectMethod == 3)
                         navigateBlind(90, .4, heading);
                     if (detectMethod == 2)
-                        navigateBlind(80, .4, heading);
+                        navigateBlind(45, .4, heading);
                 }
                 else
                     navigateBlind(90, .4, heading);
 
                 if (sonar.cmUltrasonic() < 25)
                     allStop();
-                if (sonar.cmUltrasonic() > 0 && sonar.cmUltrasonic() < 20 + (heading * .5)) {
+                if ((double) sonar.cmUltrasonic() + heading*.1 > 0 && (double) sonar.cmUltrasonic() + heading*.1 < 20 + (heading * .5)) {
                     allStop();
                     control = RobotSteps.RANGE_CHECK;
                 }
@@ -437,10 +437,10 @@ public class RedAutoBeaconsFull3 extends OpMode {
                 break;
             }
             case PRESCAN: {
-                if (sonar.cmUltrasonic() > 20) {
+                if (sonar.cmUltrasonic() > 15) {
                     navigateBlind(90, .5, heading);
                     allStop();
-                } else if (sonar.cmUltrasonic() < 15) {
+                } else if (sonar.cmUltrasonic() < 10) {
                     navigateBlind(270, .5, heading);
                     allStop();
                 } else {
@@ -548,20 +548,24 @@ public class RedAutoBeaconsFull3 extends OpMode {
             case MOVE_TO_BEACON2: {
                 boolean isVisible = scan(allTrackables.get(target2));
                 int extraAngle;
-                if (sonar.cmUltrasonic() > 20)
+                /*if (sonar.cmUltrasonic() > 20)
                     extraAngle = -10;
                 else if (sonar.cmUltrasonic() < 10)
                     extraAngle = 10;
-                else
+                else*/
                     extraAngle = 0;
 
                 if (segmentTime + 1000 > time)
                     navigateBlind(180 + extraAngle, .7, heading);
-                else
-                    navigateBlind(180 + extraAngle, .35, heading);
+                else {
+                    //navigateBlind(180 + extraAngle, .3, heading);
+                    control = RobotSteps.LOOK_FOR_BEACON_2;
+                    segmentTime = time;
+                    allStop();
+                }
 
                 if ((isVisible && posx > 1170)
-                        || ((line.alpha() > 20 || lineLeft.alpha() > 20 || lineRight.alpha() > 20) && segmentTime + 800 < time)
+                        || ((line.alpha() > 20/* || lineLeft.alpha() > 20 || lineRight.alpha() > 20*/) && segmentTime + 800 < time)
                         || (spareSonar.getUltrasonicLevel() <= 65 && segmentTime + 800 < time)
                         || ((color.blue() >= 4 || color.red() >= 4) && segmentTime + 800 < time)) {
                     if ((isVisible && posx > 1170) || line.alpha() > 20)
@@ -569,6 +573,17 @@ public class RedAutoBeaconsFull3 extends OpMode {
                     if (spareSonar.getUltrasonicLevel() <= 65)
                         detectMethod = 2;
                     control = RobotSteps.INIT_ALIGN;
+                    allStop();
+                }
+                break;
+            }
+            case LOOK_FOR_BEACON_2: {
+                boolean isVisible = scan(allTrackables.get(target2));
+                if (segmentTime + 1000 < time) {
+                    navigateBlind(180, .35, heading);
+                }
+                if (isVisible || line.alpha() > 20 || spareSonar.getUltrasonicLevel() <= 65) {
+                    control = RobotSteps.INIT_MOVE_TO_PARK;
                     allStop();
                 }
                 break;
@@ -581,7 +596,7 @@ public class RedAutoBeaconsFull3 extends OpMode {
                 break;
             }
             case MOVE_TO_PARK: {
-                if (navigateTime(300, .5, 2000, heading)) {
+                if (navigateTime(300, .5, 3000, heading)) {
                     allStop();
                     control = RobotSteps.COMPLETE;
                 }

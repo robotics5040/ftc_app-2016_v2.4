@@ -36,7 +36,7 @@ import java.util.List;
 //change
 @Autonomous(name = "Sensor Read", group = "Testing")
 public class OmnibotAutoTest extends OpMode {
-    int control = 0, degrees = 0, previousHeading = 0, heading, trueHeading, target, start, startDegrees, targetDegrees;
+    int control = 0, degrees = 0, previousHeading = 0, heading, trueHeading, target, start, startDegrees, targetDegrees, rotateDegrees = 0;
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
@@ -200,9 +200,9 @@ public class OmnibotAutoTest extends OpMode {
 
         time = System.currentTimeMillis();
 
-        heading = gyro.getHeading();
-        trueHeading = degrees + heading;
-        checkHeading();
+        int heading = gyro.getHeading() - rotateDegrees;
+        if (heading + rotateDegrees > 180)
+            heading -= 360;
 
         switch (control) {
             case 0: {
@@ -264,7 +264,7 @@ public class OmnibotAutoTest extends OpMode {
         telemetry.addData("Line Right", lineRight.alpha());
         telemetry.addData("Shooter Degrees", shooter.getCurrentPosition());
         telemetry.addData("Target Degrees", targetDegrees);
-        telemetry.addData("Sonar", sonar.cmUltrasonic());
+        telemetry.addData("Sonar", (double) sonar.cmUltrasonic() + heading*.1);
         telemetry.addData("Spare Sonar 1", spareSonar.getUltrasonicLevel());
         telemetry.addData("Spare Sonar 2", spareSonar2.getUltrasonicLevel());
         telemetry.addData("", "");
