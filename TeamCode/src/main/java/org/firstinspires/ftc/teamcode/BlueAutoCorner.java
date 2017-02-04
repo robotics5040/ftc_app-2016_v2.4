@@ -1,14 +1,9 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.GyroSensor;
-import com.qualcomm.robotcore.hardware.I2cAddr;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -29,10 +24,9 @@ import java.util.List;
 /**
  * Created by bense on 11/11/2016.
  */
-@Autonomous(name = "Blue Pos 2: Shoot 2/Stop", group = "Blue Autonomous2")
-@Disabled
-public class Auto16 extends OpMode {
-    int target, startDegrees, targetDegrees, shooterStartPos;
+@Autonomous(name = "Blue Pos 2: Shoot 2/Park on corner", group = "Blue Autonomous2")
+public class BlueAutoCorner extends OpMode {
+    int target, startDegrees, targetDegrees, shooterStartPos, rotateDegrees = 0;
     DcMotor frontLeft;
     DcMotor frontRight;
     DcMotor backLeft;
@@ -47,15 +41,11 @@ public class Auto16 extends OpMode {
     List<VuforiaTrackable> allTrackables;
     double posx, posy, startx, starty, targetDistance;
     float mmFTCFieldWidth;
-    ColorSensor color;
-    ColorSensor line;
-    UltrasonicSensor sonar;
-    Servo pusher;
     boolean lineUsed = false;
 
     public static final String TAG = "Vuforia Sample";
 
-    public enum RobotSteps {INIT_START, DELAY, INIT_MOVE, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, RETURN, PARK, ALL_DONE, SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_DOS};
+    public enum RobotSteps {INIT_START, DELAY, INIT_MOVE, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, RETURN, PARK, ALL_DONE, SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_DOS,SPIN2, ALIGN, MOVE_TO_CORNER};
     RobotSteps control = RobotSteps.INIT_START;
     OpenGLMatrix lastLocation = null;
     String loopNumber;
@@ -68,15 +58,7 @@ public class Auto16 extends OpMode {
         backRight = hardwareMap.dcMotor.get("backRight");
         shooter = hardwareMap.dcMotor.get("shooter");
         gyro = hardwareMap.gyroSensor.get("gyro");
-        sonar = hardwareMap.ultrasonicSensor.get("sonar");
-        color = hardwareMap.colorSensor.get("color");
-        I2cAddr newAddress = new I2cAddr(0x1f);
-        line = hardwareMap.colorSensor.get("line");
-        line.setI2cAddress(newAddress);
-        pusher = hardwareMap.servo.get("pusher");
-        pusher.setPosition(0);
-        color.enableLed(false);
-        line.enableLed(true);
+
 
         gyro.calibrate();
 
@@ -142,8 +124,8 @@ public class Auto16 extends OpMode {
     {
         time = System.currentTimeMillis();
 
-        int heading = gyro.getHeading();
-        if (heading > 180)
+        int heading = gyro.getHeading() - rotateDegrees;
+        if (heading + rotateDegrees > 270)
             heading -= 360;
 
         switch (control)
@@ -155,7 +137,7 @@ public class Auto16 extends OpMode {
                 break;
             }
             case DELAY: {//Initial delay, set control to 2 to skip delay
-                if (segmentTime + 15000 < time) //set to 3 seconds for testing
+                if (segmentTime + 10000 < time) //set to 3 seconds for testing
                     control = RobotSteps.INIT_MOVE;
                 telemetry.addData("Status", "Waiting to start...");
                 break;
@@ -168,7 +150,7 @@ public class Auto16 extends OpMode {
                 break;
             }
             case MOVE_TO_SHOOT: {//move into position to shoot (timed move)
-                if (navigateTime(180, .6, 1400, heading))
+                if (navigateTime(180, .6, 1350, heading))
                     control = RobotSteps.INIT_SHOOT;
                 telemetry.addData("Status", "Moving for 1 seconds...");
                 break;
@@ -200,8 +182,8 @@ public class Auto16 extends OpMode {
                 break;
             }
             case SWEEPER_MOVE_FORWARD: {//swpr.mov -> > var(.7) -- pos+
-                sweeper.setPower(.7);
-                if (segmentTime + 1300 < time)
+                sweeper.setPower(.4);
+                if (segmentTime + 1600 < time)
                 {
                     control = RobotSteps.SHOOT_DOS;
                     shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -218,22 +200,45 @@ public class Auto16 extends OpMode {
             }
             case SHOOT_DOS: {//shoot^2
                 if (!shoot() ) {
-                    control = RobotSteps.RETURN;
+                    control = RobotSteps.SPIN2;
                     segmentTime = time;
                 }
                 break;
 
             }
-            /*case RETURN: {//move forward to knock off cap ball
-                if (navigateTime(0, .6, 1400, heading))
-                    control = RobotSteps.ALL_DONE;
+
+            /*case SPIN2: {//Turn so corner farthest from color sensor parks on corner
+                if (rotate('l', -90, heading)) {
+                    control = RobotSteps.ALIGN;
+                    rotateDegrees = 30;
+                    allStop();
+                }
+                telemetry.addData("Status", "Turning around...");
                 break;
             }*/
-            /*case PARK: {//park on center
-                if (navigateTime(270, .5, 2500, heading))
+            case SPIN2: {
+                rotateDegrees = 10;
+                if (realign(heading)) {
+                    control = BlueAutoCorner.RobotSteps.MOVE_TO_CORNER;
+                    allStop();
+                }
+                break;
+            }
+            case ALIGN:{
+                if(realign(heading)) {
+                    allStop();
+                    control = RobotSteps.MOVE_TO_CORNER;
+                    segmentTime = time;
+                }
+                break;
+            }
+            case MOVE_TO_CORNER: {
+                if (navigateTime(230, .5, 4000, heading))
                     control = RobotSteps.ALL_DONE;
                 break;
-            }*/
+            }
+
+
             default: {//Hopefully this only runs when program ends
                 allStop();
                 telemetry.addData("Status", "Switch is in default. Waiting for autonomous to end...");
@@ -243,7 +248,6 @@ public class Auto16 extends OpMode {
         telemetry.addData("Timer", time - segmentTime);
         telemetry.addData("Control", control);
         telemetry.addData("Heading", heading);
-        telemetry.addData("Sonar", sonar.getUltrasonicLevel());
         telemetry.addData("Sweeper Power",sweeper.getPower());
         telemetry.addData("Sweeper Position",sweeper.getCurrentPosition());
 
@@ -303,6 +307,7 @@ public class Auto16 extends OpMode {
         return true;
     }
 
+
     public void navigateBlind(int deg, double power, int h)
     {
         double x = Math.cos(deg * (Math.PI/180.0)), y = Math.sin(deg * (Math.PI/180.0));
@@ -358,11 +363,7 @@ public class Auto16 extends OpMode {
 
     public double correct(int h)
     {
-        if (h > startDegrees + 10)
-            return .1;
-        if (h < startDegrees - 10)
-            return -.1;
-        return 0;
+        return (h * .01)/2;
     }
 
     public boolean shoot() //Waiting for launcher to be built, no code implemented
@@ -396,5 +397,27 @@ public class Auto16 extends OpMode {
         if (robotLocationTransform != null) {
             lastLocation = robotLocationTransform;
         }
+    }
+    public boolean realign (int h)
+    {
+        allStop();
+        if (h + 3 < startDegrees) {
+            frontRight.setPower(-.08);
+            frontLeft.setPower(-.08);
+            backRight.setPower(-.08);
+            backLeft.setPower(-.08);
+            segmentTime = time;
+        } else if (h - 3 > startDegrees) {
+            frontRight.setPower(.08);
+            frontLeft.setPower(.08);
+            backRight.setPower(.08);
+            backLeft.setPower(.08);
+            segmentTime = time;
+        } else {
+            allStop();
+            if (segmentTime + 500 < time)
+                return true;
+        }
+        return false;
     }
 }

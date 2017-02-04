@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * Created by bense on 11/11/2016.
  */
-@Autonomous(name = "Red Pos 2: Shoot 2/Hit cap ball/Park on center :)", group = "Red Autonomous")
+@Autonomous(name = "Red Pos 2: Shoot 2/Hit cap ball/Park on center :)", group = "Red Autonomous2")
 public class RedPos2Shoot2Cap extends OpMode {
     int target, startDegrees, targetDegrees, shooterStartPos, rotateDegrees = 0;
     DcMotor frontLeft;
@@ -141,7 +141,7 @@ public class RedPos2Shoot2Cap extends OpMode {
                 break;
             }
             case DELAY: {//Initial delay, set control to 2 to skip delay
-                if (segmentTime + 20000 < time) //set to 3 seconds for testing
+                if (segmentTime + 15000 < time) //set to 3 seconds for testing
                     control = RobotSteps.INIT_MOVE;
                 telemetry.addData("Status", "Waiting to start...");
                 break;
@@ -154,7 +154,7 @@ public class RedPos2Shoot2Cap extends OpMode {
                 break;
             }
             case MOVE_TO_SHOOT: {//move into position to shoot (timed move)
-                if (navigateTime(180, .6, 1500, heading)) {
+                if (navigateTime(180, .6, 1350, heading)) {
                     control = RobotSteps.DELAY_FOR_SHOOT;
                     segmentTime = time;
                 }
@@ -194,8 +194,8 @@ public class RedPos2Shoot2Cap extends OpMode {
                 break;
             }
             case SWEEPER_MOVE_FORWARD: {//swpr.mov -> > var(.7) -- pos+
-                sweeper.setPower(.7);
-                if (segmentTime + 1300 < time)
+                sweeper.setPower(.5);
+                if (segmentTime + 2300 < time)
                 {
                     control = RobotSteps.SHOOT_DOS;
                     shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
