@@ -31,6 +31,7 @@ import java.util.List;
  * Created by bense on 12/6/2016.
  */
 @Autonomous (name = "Red pos 1: Shoot 2/Press 2 SPEED", group = "Red Autonomous")
+@Disabled
 public class RedAutoBeaconsFull extends OpMode {
     //Removing all possible delays and speeding up motors
     public final int VERSION = 16;

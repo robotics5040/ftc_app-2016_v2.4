@@ -2,12 +2,8 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.GyroSensor;
-import com.qualcomm.robotcore.hardware.I2cAddr;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -28,8 +24,8 @@ import java.util.List;
 /**
  * Created by bense on 11/11/2016.
  */
-@Autonomous(name = "Blue Pos 2: Shoot 2/Hit cap ball/Park on center", group = "Blue Autonomous2")
-public class BluePos2Shoot2Cap extends OpMode {
+@Autonomous(name = "Blue Pos 2: Shoot 2/Park on corner", group = "Blue Autonomous2")
+public class BlueAutoCorner extends OpMode {
     int target, startDegrees, targetDegrees, shooterStartPos, rotateDegrees = 0;
     DcMotor frontLeft;
     DcMotor frontRight;
@@ -49,7 +45,7 @@ public class BluePos2Shoot2Cap extends OpMode {
 
     public static final String TAG = "Vuforia Sample";
 
-    public enum RobotSteps {INIT_START, DELAY, INIT_MOVE, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, RETURN, PARK, ALL_DONE, SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_DOS,SPIN2, ALIGN};
+    public enum RobotSteps {INIT_START, DELAY, INIT_MOVE, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, RETURN, PARK, ALL_DONE, SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_DOS,SPIN2, ALIGN, MOVE_TO_CORNER};
     RobotSteps control = RobotSteps.INIT_START;
     OpenGLMatrix lastLocation = null;
     String loopNumber;
@@ -62,6 +58,7 @@ public class BluePos2Shoot2Cap extends OpMode {
         backRight = hardwareMap.dcMotor.get("backRight");
         shooter = hardwareMap.dcMotor.get("shooter");
         gyro = hardwareMap.gyroSensor.get("gyro");
+
 
         gyro.calibrate();
 
@@ -153,7 +150,7 @@ public class BluePos2Shoot2Cap extends OpMode {
                 break;
             }
             case MOVE_TO_SHOOT: {//move into position to shoot (timed move)
-                if (navigateTime(180, .6, 1400, heading))
+                if (navigateTime(180, .6, 1350, heading))
                     control = RobotSteps.INIT_SHOOT;
                 telemetry.addData("Status", "Moving for 1 seconds...");
                 break;
@@ -186,7 +183,7 @@ public class BluePos2Shoot2Cap extends OpMode {
             }
             case SWEEPER_MOVE_FORWARD: {//swpr.mov -> > var(.7) -- pos+
                 sweeper.setPower(.4);
-                if (segmentTime + 1300 < time)
+                if (segmentTime + 1600 < time)
                 {
                     control = RobotSteps.SHOOT_DOS;
                     shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -203,30 +200,26 @@ public class BluePos2Shoot2Cap extends OpMode {
             }
             case SHOOT_DOS: {//shoot^2
                 if (!shoot() ) {
-                    control = RobotSteps.RETURN;
+                    control = RobotSteps.SPIN2;
                     segmentTime = time;
                 }
                 break;
 
             }
-            case RETURN: {//move forward to knock off cap ball
-                if (navigateTime(180, .6, 1400, heading))
-                    control = RobotSteps.SPIN2;
-                break;
-            }
-            /*case SPIN2: {//Turn
-                if (rotate('r', 180, heading)) {
+
+            /*case SPIN2: {//Turn so corner farthest from color sensor parks on corner
+                if (rotate('l', -90, heading)) {
                     control = RobotSteps.ALIGN;
-                    rotateDegrees = 180;
+                    rotateDegrees = 30;
                     allStop();
                 }
                 telemetry.addData("Status", "Turning around...");
                 break;
             }*/
             case SPIN2: {
-                rotateDegrees = 180;
+                rotateDegrees = 10;
                 if (realign(heading)) {
-                    control = BluePos2Shoot2Cap.RobotSteps.PARK;
+                    control = BlueAutoCorner.RobotSteps.MOVE_TO_CORNER;
                     allStop();
                 }
                 break;
@@ -234,16 +227,17 @@ public class BluePos2Shoot2Cap extends OpMode {
             case ALIGN:{
                 if(realign(heading)) {
                     allStop();
-                    control = RobotSteps.PARK;
+                    control = RobotSteps.MOVE_TO_CORNER;
                     segmentTime = time;
                 }
                 break;
             }
-            case PARK: {//park
-                if (navigateTime(270, .5, 2000, heading))
+            case MOVE_TO_CORNER: {
+                if (navigateTime(230, .5, 4000, heading))
                     control = RobotSteps.ALL_DONE;
                 break;
             }
+
 
             default: {//Hopefully this only runs when program ends
                 allStop();
@@ -369,11 +363,7 @@ public class BluePos2Shoot2Cap extends OpMode {
 
     public double correct(int h)
     {
-        if (h > startDegrees + 10)
-            return .1;
-        if (h < startDegrees - 10)
-            return -.1;
-        return 0;
+        return (h * .01)/2;
     }
 
     public boolean shoot() //Waiting for launcher to be built, no code implemented
@@ -410,13 +400,14 @@ public class BluePos2Shoot2Cap extends OpMode {
     }
     public boolean realign (int h)
     {
-        if (h + 6 < startDegrees) {
+        allStop();
+        if (h + 3 < startDegrees) {
             frontRight.setPower(-.08);
             frontLeft.setPower(-.08);
             backRight.setPower(-.08);
             backLeft.setPower(-.08);
             segmentTime = time;
-        } else if (h - 6 > startDegrees) {
+        } else if (h - 3 > startDegrees) {
             frontRight.setPower(.08);
             frontLeft.setPower(.08);
             backRight.setPower(.08);

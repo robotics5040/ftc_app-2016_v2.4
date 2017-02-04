@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -28,7 +29,8 @@ import java.util.List;
 /**
  * Created by bense on 11/11/2016.
  */
-@Autonomous(name = "Blue Pos 2: Shoot 2/Return to Start", group = "Blue Autonomous")
+@Autonomous(name = "Blue Pos 2: Shoot 2/Stop", group = "Blue Autonomous2")
+@Disabled
 public class Auto16 extends OpMode {
     int target, startDegrees, targetDegrees, shooterStartPos;
     DcMotor frontLeft;
