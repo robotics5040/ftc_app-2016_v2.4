@@ -153,7 +153,7 @@ public class BluePos2Shoot2Cap extends OpMode {
                 break;
             }
             case MOVE_TO_SHOOT: {//move into position to shoot (timed move)
-                if (navigateTime(180, .6, 1400, heading))
+                if (navigateTime(180, .6, 1350, heading))
                     control = RobotSteps.INIT_SHOOT;
                 telemetry.addData("Status", "Moving for 1 seconds...");
                 break;
@@ -185,7 +185,7 @@ public class BluePos2Shoot2Cap extends OpMode {
                 break;
             }
             case SWEEPER_MOVE_FORWARD: {//swpr.mov -> > var(.7) -- pos+
-                sweeper.setPower(.4);
+                sweeper.setPower(.5);
                 if (segmentTime + 1300 < time)
                 {
                     control = RobotSteps.SHOOT_DOS;
@@ -210,7 +210,7 @@ public class BluePos2Shoot2Cap extends OpMode {
 
             }
             case RETURN: {//move forward to knock off cap ball
-                if (navigateTime(180, .6, 1400, heading))
+                if (navigateTime(180, .6, 1340, heading))
                     control = RobotSteps.SPIN2;
                 break;
             }
@@ -226,7 +226,7 @@ public class BluePos2Shoot2Cap extends OpMode {
             case SPIN2: {
                 rotateDegrees = 180;
                 if (realign(heading)) {
-                    control = BluePos2Shoot2Cap.RobotSteps.PARK;
+                    control = RobotSteps.PARK;
                     allStop();
                 }
                 break;
