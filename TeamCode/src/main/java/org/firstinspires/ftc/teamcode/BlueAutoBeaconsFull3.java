@@ -255,12 +255,12 @@ public class BlueAutoBeaconsFull3 extends OpMode {
             case MOVE_TO_PUSH_POS: {
                 scan(allTrackables.get(target2));
                 if (target2 == 2)
-                    navigateBlind(100, .4, heading);
+                    navigateBlind(90, .4, heading);
                 else
                     navigateBlind(90, .4, heading);
                 if (sonar.cmUltrasonic() < 25)
                     allStop();
-                if ((double) sonar.cmUltrasonic() + heading*.1 > 0 && (double) sonar.cmUltrasonic() + heading*.1 < 20 + (heading * .5)) {
+                if ((double) sonar.cmUltrasonic() + heading*.1 > 0 && (double) sonar.cmUltrasonic() + heading*.1 < 20) {
                     allStop();
                     control = RobotSteps.RANGE_CHECK;
                 }
@@ -268,7 +268,7 @@ public class BlueAutoBeaconsFull3 extends OpMode {
             }
             case RANGE_CHECK: {
                 scan(allTrackables.get(target2));
-                if (sonar.cmUltrasonic() <= 15 && segmentTime + 500 > time) {
+                if (sonar.cmUltrasonic() <= 20 && segmentTime + 500 > time) {
                     navigateBlind(270, .3, heading);
                 } else {
                     control = RobotSteps.INIT_REALIGN;
@@ -423,7 +423,7 @@ public class BlueAutoBeaconsFull3 extends OpMode {
                 if (sonar.cmUltrasonic() > 30 && sonar.cmUltrasonic() != 255) {
                     control = RobotSteps.REREALIGN;
                     if (target2 == 2)
-                        control = RobotSteps.INIT_MOVE_TO_SHOOT;
+                        control = RobotSteps.TURN_TO_SHOOT;
                     if (target2 == 0)
                         target2 = 2;
                     segmentTime = time;
@@ -456,7 +456,7 @@ public class BlueAutoBeaconsFull3 extends OpMode {
                 else*/
                     extraAngle = 0;
 
-                if (segmentTime + 5000 > time)
+                if (segmentTime + 1500 > time)
                     navigateBlind(extraAngle, .7, heading);
                 else {
                     control = RobotSteps.LOOK_FOR_BEACON_2;
@@ -464,40 +464,43 @@ public class BlueAutoBeaconsFull3 extends OpMode {
                     segmentTime = time;
                 }
 
-                if ((isVisible && posx > 1170)
-                        || ((line.alpha() > 10/* || lineLeft.alpha() > 20 || lineRight.alpha() > 20*/) && segmentTime + 800 < time)
+                /*if ((isVisible && posx > 1170)
+                        || ((line.alpha() > 10/* || lineLeft.alpha() > 20 || lineRight.alpha() > 20/) && segmentTime + 800 < time)
                         || (spareSonar.getUltrasonicLevel() <= 75 && segmentTime + 600 < time)
                         || ((color.blue() >= 4 || color.red() >= 4) && segmentTime + 800 < time)) {
+                    control = RobotSteps.INIT_ALIGN;
+                    allStop();
+                }*/
+                break;
+            }
+            case LOOK_FOR_BEACON_2: {
+                boolean isVisible = scan(allTrackables.get(target2));
+                if (realign(heading, 5) && segmentTime + 1000 < time) {
+                    navigateBlind(0, .35, heading);
+                }
+                if (isVisible || line.alpha() > 20 || spareSonar.getUltrasonicLevel() <= 65) {
                     control = RobotSteps.INIT_ALIGN;
                     allStop();
                 }
                 break;
             }
-            case LOOK_FOR_BEACON_2: {
-                if (segmentTime + 1000 < time)
-                    control = RobotSteps.COMPLETE;
-                    //navigateBlind(0, .3, heading);
+            case TURN_TO_SHOOT: {
+                rotateDegrees = 25;
+                if (realign(heading, 3)) {
+                    control = RobotSteps.INIT_MOVE_TO_SHOOT;
+                    allStop();
+                }
                 break;
             }
             case INIT_MOVE_TO_SHOOT: {
-                if (realign(heading, 5)) {
-                    allStop();
-                    control = RobotSteps.MOVE_TO_SHOOT;
-                    segmentTime = time;
-                }
+                allStop();
+                control = RobotSteps.MOVE_TO_SHOOT;
+                segmentTime = time;
                 break;
             }
             case MOVE_TO_SHOOT: {
-                navigateBlind(225, .5, heading);
+                navigateBlind(180, .5, heading);
                 if (segmentTime + 1350 < time) {
-                    control = RobotSteps.TURN_TO_SHOOT;
-                    allStop();
-                }
-                break;
-            }
-            case TURN_TO_SHOOT: {
-                rotateDegrees = 20;
-                if (realign(heading, 3)) {
                     control = RobotSteps.INIT_SHOOT;
                     allStop();
                 }
