@@ -340,10 +340,10 @@ public class BlueAutoBeaconsFull3 extends OpMode {
                 break;
             }
             case PRESCAN: {
-                if (sonar.cmUltrasonic() > 15) {
+                if (sonar.cmUltrasonic() > 20) {
                     navigateBlind(90, .5, heading);
                     allStop();
-                } else if (sonar.cmUltrasonic() < 10) {
+                } else if (sonar.cmUltrasonic() < 15) {
                     navigateBlind(270, .5, heading);
                     allStop();
                 } else {
