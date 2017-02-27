@@ -153,7 +153,7 @@ public class BluePos2Shoot2Cap extends OpMode {
                 break;
             }
             case MOVE_TO_SHOOT: {//move into position to shoot (timed move)
-                if (navigateTime(180, .6, 1350, heading))
+                if (navigateTime(180, .6, 1400, heading))
                     control = RobotSteps.INIT_SHOOT;
                 telemetry.addData("Status", "Moving for 1 seconds...");
                 break;
@@ -210,8 +210,10 @@ public class BluePos2Shoot2Cap extends OpMode {
 
             }
             case RETURN: {//move forward to knock off cap ball
-                if (navigateTime(180, .6, 1340, heading))
+                if (navigateTime(180, .6, 1340, heading)) {
                     control = RobotSteps.SPIN2;
+                    segmentTime = time;
+                }
                 break;
             }
             /*case SPIN2: {//Turn
@@ -224,7 +226,7 @@ public class BluePos2Shoot2Cap extends OpMode {
                 break;
             }*/
             case SPIN2: {
-                rotateDegrees = 180;
+                rotateDegrees = 90;
                 if (realign(heading)) {
                     control = RobotSteps.PARK;
                     allStop();
@@ -240,7 +242,7 @@ public class BluePos2Shoot2Cap extends OpMode {
                 break;
             }
             case PARK: {//park
-                if (navigateTime(270, .5, 2000, heading))
+                if (navigateTime(0, .5, 1250, heading))
                     control = RobotSteps.ALL_DONE;
                 break;
             }
@@ -369,11 +371,7 @@ public class BluePos2Shoot2Cap extends OpMode {
 
     public double correct(int h)
     {
-        if (h > startDegrees + 10)
-            return .1;
-        if (h < startDegrees - 10)
-            return -.1;
-        return 0;
+        return (h * .01)/2;
     }
 
     public boolean shoot() //Waiting for launcher to be built, no code implemented
@@ -410,17 +408,19 @@ public class BluePos2Shoot2Cap extends OpMode {
     }
     public boolean realign (int h)
     {
+        if (Math.abs(h - startDegrees) < 20)
+            allStop();
         if (h + 6 < startDegrees) {
-            frontRight.setPower(-.08);
-            frontLeft.setPower(-.08);
-            backRight.setPower(-.08);
-            backLeft.setPower(-.08);
+            frontRight.setPower(-.09);
+            frontLeft.setPower(-.09);
+            backRight.setPower(-.09);
+            backLeft.setPower(-.09);
             segmentTime = time;
         } else if (h - 6 > startDegrees) {
-            frontRight.setPower(.08);
-            frontLeft.setPower(.08);
-            backRight.setPower(.08);
-            backLeft.setPower(.08);
+            frontRight.setPower(.09);
+            frontLeft.setPower(.09);
+            backRight.setPower(.09);
+            backLeft.setPower(.09);
             segmentTime = time;
         } else {
             allStop();

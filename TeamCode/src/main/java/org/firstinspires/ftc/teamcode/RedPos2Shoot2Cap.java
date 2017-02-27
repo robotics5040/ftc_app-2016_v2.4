@@ -70,58 +70,11 @@ public class RedPos2Shoot2Cap extends OpMode {
         backLeft.setDirection(DcMotor.Direction.FORWARD);
         frontRight.setDirection(DcMotor.Direction.FORWARD);
         backRight.setDirection(DcMotor.Direction.FORWARD);
+        sweeper.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         startTime = System.currentTimeMillis();
         time = startTime;
         segmentTime = startTime;
-
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(com.qualcomm.ftcrobotcontroller.R.id.cameraMonitorViewId);
-        parameters.vuforiaLicenseKey = "AUBrQCz/////AAAAGXg5njs2FEpBgEGX/o6QppZq8c+tG+wbAB+cjpPcC5bwtGmv+kD1lqGbNrlHctdvrdmTJ9Fm1OseZYM15VBaiF++ICnjCSY/IHPhjGW9TXDMAOv/Pdz/T5H86PduPVVKvdGiQ/gpE8v6HePezWRRWG6CTA21itPZfj0xDuHdqrAGGiIQXcUbCTfRAkY7HwwRfQOM1aDhmeAaOvkPPCnaA228iposAByBHmA2rkx4/SmTtN82rtOoRn3/I1PA9RxMiWHWlU67yMQW4ExpTe2eRtq7fPGCCjFeXqOl57au/rZySASURemt7pwbprumwoyqYLgK9eJ6hC2UqkJO5GFzTi3XiDNOYcaFOkP71P5NE/BB";
-        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.FRONT;
-        this.vuforia = ClassFactory.createVuforiaLocalizer(parameters);
-
-        VuforiaTrackables targets = this.vuforia.loadTrackablesFromAsset("FTC_2016-17");
-
-        VuforiaTrackable redTools  = targets.get(1); //load tools
-        redTools.setName("Tools");
-
-        VuforiaTrackable redGears  = targets.get(3); //load gears
-        redGears.setName("Gears");
-
-        allTrackables = new ArrayList<VuforiaTrackable>();
-        allTrackables.addAll(targets);
-
-        float mmPerInch        = 25.4f;
-        float mmBotWidth       = (float)16.5 * mmPerInch;
-        mmFTCFieldWidth  = (12*12 - 2) * mmPerInch;
-
-        OpenGLMatrix redToolsLocationOnField = OpenGLMatrix //set up tracking for tools
-                .translation(mmFTCFieldWidth/2 - (float)863.6, mmFTCFieldWidth/2, 0)
-                .multiplied(Orientation.getRotationMatrix(
-                        AxesReference.EXTRINSIC, AxesOrder.XZX,
-                        AngleUnit.DEGREES, 90, 0, 0));
-        redTools.setLocation(redToolsLocationOnField);
-        RobotLog.ii(TAG, "Tools=%s", format(redToolsLocationOnField));
-
-        OpenGLMatrix redGearsLocationOnField = OpenGLMatrix //set up tracking for gears
-                .translation(mmFTCFieldWidth/2 - (float)2082.8, mmFTCFieldWidth/2, 0)
-                .multiplied(Orientation.getRotationMatrix(
-                        AxesReference.EXTRINSIC, AxesOrder.XZX,
-                        AngleUnit.DEGREES, 90, 0, 0));
-        redGears.setLocation(redGearsLocationOnField);
-        RobotLog.ii(TAG, "Gears=%s", format(redGearsLocationOnField));
-
-        OpenGLMatrix phoneLocationOnRobot = OpenGLMatrix //set up phone
-                .translation(mmBotWidth/2,(float)44.45 + 175,200)
-                .multiplied(Orientation.getRotationMatrix(
-                        AxesReference.EXTRINSIC, AxesOrder.YZY,
-                        AngleUnit.DEGREES, -90, 0, 0));
-        RobotLog.ii(TAG, "phone=%s", format(phoneLocationOnRobot));
-
-        ((VuforiaTrackableDefaultListener)redTools.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
-        ((VuforiaTrackableDefaultListener)redGears.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
-
-        targets.activate();
     }
 
     public void loop()
@@ -140,8 +93,8 @@ public class RedPos2Shoot2Cap extends OpMode {
                 telemetry.addData("Status", "Setting up start delay...");
                 break;
             }
-            case DELAY: {//Initial delay, set control to 2 to skip delay
-                if (segmentTime + 15000 < time) //set to 3 seconds for testing
+            case DELAY: {//Initial delay
+                if (segmentTime/* + 15000*/ < time)
                     control = RobotSteps.INIT_MOVE;
                 telemetry.addData("Status", "Waiting to start...");
                 break;
@@ -154,7 +107,7 @@ public class RedPos2Shoot2Cap extends OpMode {
                 break;
             }
             case MOVE_TO_SHOOT: {//move into position to shoot (timed move)
-                if (navigateTime(180, .6, 1350, heading)) {
+                if (navigateTime(180, .6, 1500, heading)) {
                     control = RobotSteps.DELAY_FOR_SHOOT;
                     segmentTime = time;
                 }
@@ -211,18 +164,31 @@ public class RedPos2Shoot2Cap extends OpMode {
 
             }
             case SHOOT_DOS: {//shoot^2
+                int sr = sweeper.getCurrentPosition() % 720;
                 if (!shoot() ) {
                     control = RobotSteps.RETURN;
                     segmentTime = time;
                 }
-                break;
 
+                if (sr < 0) {
+                    sr = 720 - Math.abs(sr);
+                }
+                if (sr <= 100 || sr >= 620) {
+                    sweeper.setPower(0);
+                } else if (sr <= 360) {
+                    sweeper.setPower(-.08);
+                } else if (sr > 360) {
+                    sweeper.setPower(.15);
+                }
+                break;
             }
 
             case RETURN: {//move forward to knock off cap ball
-                if (navigateTime(180, .6, 1000, heading))
+                if (navigateTime(180, .6, 1500, heading)) {
                     control = RobotSteps.STRAFE;
-                    telemetry.addData("Status", "Made it to the delay case");
+                    segmentTime = time;
+                }
+                telemetry.addData("Status", "Made it to the delay case");
                 break;
             }
             case STRAFE: {
@@ -262,6 +228,17 @@ public class RedPos2Shoot2Cap extends OpMode {
             */
             default: {//Hopefully this only runs when program ends
                 allStop();
+                int sr = sweeper.getCurrentPosition() % 1440;
+                if (sr < 0) {
+                    sr = 1440 - Math.abs(sr);
+                }
+                if (sr <= 50 || sr >= 1390) {
+                    sweeper.setPower(0);
+                } else if (sr <= 360) {
+                    sweeper.setPower(-.1);
+                } else if (sr > 360) {
+                    sweeper.setPower(.15);
+                }
                 telemetry.addData("Status", "Switch is in default. Waiting for autonomous to end...");
             }
         }

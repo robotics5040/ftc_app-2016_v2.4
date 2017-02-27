@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import android.location.Location;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.vuforia.Trackable;
@@ -18,6 +19,7 @@ import java.util.HashMap;
  * Created by bense on 9/12/2016.
  */
 @TeleOp(name = "CameraTest", group = "Tests")
+@Disabled
 public class CameraTest extends OpMode {
     //FTCVuforia vuforia;
     public void init()

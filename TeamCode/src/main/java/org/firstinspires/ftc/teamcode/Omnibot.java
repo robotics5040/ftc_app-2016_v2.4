@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 /**
  * Created by bense on 8/31/2016.
  */
-@TeleOp(name = "Omnibot", group = "Main")
+@TeleOp(name = "Demo Omnibot", group = "Main")
 public class Omnibot extends OpMode {
     DcMotor frontLeft;
     DcMotor frontRight;
@@ -63,15 +63,15 @@ public class Omnibot extends OpMode {
         //power multipliers - so that gamepad controls do not function at 100%
         if (gamepad1.right_bumper)
         {
-            rx *= .5;
+            rx *= -.5;
             ry *= -.5;
-            lx *= .5;
+            lx *= -.5;
             ly *= .5;
         }
         else {
-            rx *= .75;
+            rx *= -.75;
             ry *= -.75;
-            lx *= .75;
+            lx *= -.75;
             ly *= .75;
         }//                  direction                               rotation
         //average of the joystick inputs + rotation

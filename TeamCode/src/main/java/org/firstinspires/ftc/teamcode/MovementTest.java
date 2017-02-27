@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -11,6 +12,7 @@ import com.qualcomm.robotcore.hardware.GyroSensor;
  * Created by bense on 12/9/2016.
  */
 @TeleOp(name = "Movement Test", group = "Testing")
+@Disabled
 public class MovementTest extends OpMode {
     DcMotor frontLeft;
     DcMotor frontRight;

@@ -11,6 +11,8 @@ import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.I2cDevice;
 import com.qualcomm.robotcore.hardware.I2cDeviceReader;
+import com.qualcomm.robotcore.hardware.I2cDeviceSynch;
+import com.qualcomm.robotcore.hardware.I2cDeviceSynchImpl;
 import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.RobotLog;
 
@@ -51,8 +53,14 @@ public class OmnibotAutoTest extends OpMode {
     float mmFTCFieldWidth;
     ColorSensor color, line, lineLeft, lineRight;
     ModernRoboticsI2cRangeSensor sonar;
-    UltrasonicSensor spareSonar;
-    UltrasonicSensor spareSonar2;
+    I2cDevice sonar2;
+    I2cDevice wallSonar;
+
+    I2cDeviceSynch sonar2Reader;
+    I2cDeviceSynch wallSonarReader;
+
+    byte[] sonar2Cache;
+    byte[] wallSonarCache;
 
     public static final String TAG = "Vuforia Sample";
 
@@ -69,9 +77,8 @@ public class OmnibotAutoTest extends OpMode {
         gyro.calibrate();
         color = hardwareMap.colorSensor.get("color");
 
-        I2cAddr lineAddress = new I2cAddr(0x1f);
         line = hardwareMap.colorSensor.get("line");
-        line.setI2cAddress(lineAddress);
+        line.setI2cAddress(I2cAddr.create8bit(0x42));
 
         //I2cAddr lineAddressLeft = new I2cAddr(0x20);
         lineLeft = hardwareMap.colorSensor.get("lineLeft");
@@ -79,7 +86,7 @@ public class OmnibotAutoTest extends OpMode {
 
         //I2cAddr lineAddressRight = new I2cAddr(0x21);
         lineRight = hardwareMap.colorSensor.get("lineRight");
-        lineRight.setI2cAddress(I2cAddr.create8bit(0x42));
+        lineRight.setI2cAddress(I2cAddr.create8bit(0x3e));
 
         color.enableLed(false);
         line.enableLed(true);
@@ -87,8 +94,15 @@ public class OmnibotAutoTest extends OpMode {
         lineRight.enableLed(true);
         sonar = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "sonar");
         sonar.setI2cAddress(I2cAddr.create8bit(0x28));
-        spareSonar = hardwareMap.ultrasonicSensor.get("sonar2");
-        spareSonar2 = hardwareMap.ultrasonicSensor.get("sonar3");
+
+        sonar2 = hardwareMap.i2cDevice.get("sonar2");
+        wallSonar = hardwareMap.i2cDevice.get("wallSonar");
+
+        sonar2Reader = new I2cDeviceSynchImpl(sonar2, I2cAddr.create8bit(0x2c), false);
+        wallSonarReader = new I2cDeviceSynchImpl(wallSonar, I2cAddr.create8bit(0x2a), false);
+
+        sonar2Reader.engage();
+        wallSonarReader.engage();
 
         shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -200,8 +214,11 @@ public class OmnibotAutoTest extends OpMode {
 
         time = System.currentTimeMillis();
 
+        sonar2Cache = sonar2Reader.read(0x04, 1);
+        wallSonarCache = wallSonarReader.read(0x04, 1);
+
         int heading = gyro.getHeading() - rotateDegrees;
-        if (heading + rotateDegrees > 180)
+        if (heading + rotateDegrees > 270)
             heading -= 360;
 
         switch (control) {
@@ -264,9 +281,9 @@ public class OmnibotAutoTest extends OpMode {
         telemetry.addData("Line Right", lineRight.alpha());
         telemetry.addData("Shooter Degrees", shooter.getCurrentPosition());
         telemetry.addData("Target Degrees", targetDegrees);
-        telemetry.addData("Sonar", (double) sonar.cmUltrasonic() + heading*.1);
-        telemetry.addData("Spare Sonar 1", spareSonar.getUltrasonicLevel());
-        telemetry.addData("Spare Sonar 2", spareSonar2.getUltrasonicLevel());
+        telemetry.addData("Sonar", sonar.cmUltrasonic());
+        telemetry.addData("Sonar 2", sonar2Cache[0] & 0xff);
+        telemetry.addData("Wall Sonar", wallSonarCache[0] & 0xff);
         telemetry.addData("", "");
         telemetry.addData("line mem", line.getI2cAddress().get8Bit());
         telemetry.addData("line left mem", lineLeft.getI2cAddress().get8Bit());
