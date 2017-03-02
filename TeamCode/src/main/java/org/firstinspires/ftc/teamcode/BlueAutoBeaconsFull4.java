@@ -318,6 +318,7 @@ public class BlueAutoBeaconsFull4 extends OpMode {
                     segmentTime = time;
                 } else if (segmentTime + 1000 < time) {
                     sideOfLine = 1;
+                    posy = 1200;
                     control = RobotSteps.ALIGN;
                     segmentTime = time;
                 }
@@ -325,7 +326,7 @@ public class BlueAutoBeaconsFull4 extends OpMode {
                 break;
             }
             case ALIGN: {
-                scan(allTrackables.get(target2));
+                boolean isVisible = scan(allTrackables.get(target2));
                 int y = 0;
                 if (target2 == 0)
                     y = beaconPos1[1];
@@ -337,7 +338,7 @@ public class BlueAutoBeaconsFull4 extends OpMode {
                 } else {
                     if (sideOfLine == -1) {
                         navigateBlind(180, .33, heading);
-                        if (posy - 20 > y) {
+                        if (posy - 20 > y && isVisible) {
                             sideOfLine = 1;
                             segmentTime = time;
                         }
@@ -346,7 +347,7 @@ public class BlueAutoBeaconsFull4 extends OpMode {
                     }
                     if (sideOfLine == 1) {
                         navigateBlind(0, .33, heading);
-                        if (posy + 20 < y) {
+                        if (posy + 20 < y && isVisible) {
                             sideOfLine = -1;
                             segmentTime = time;
                         }
