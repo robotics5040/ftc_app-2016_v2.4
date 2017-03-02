@@ -51,7 +51,7 @@ public class OmnibotAutoTest extends OpMode {
     List<VuforiaTrackable> allTrackables;
     double posx, posy, posz, startx, starty;
     float mmFTCFieldWidth;
-    ColorSensor color, line, lineLeft, lineRight;
+    ColorSensor color, line, lineLeft, lineRight, color2;
     ModernRoboticsI2cRangeSensor sonar;
     I2cDevice sonar2;
     I2cDevice wallSonar;
@@ -76,6 +76,9 @@ public class OmnibotAutoTest extends OpMode {
         gyro = hardwareMap.gyroSensor.get("gyro");
         gyro.calibrate();
         color = hardwareMap.colorSensor.get("color");
+
+        color2 = hardwareMap.colorSensor.get("color2");
+        color2.setI2cAddress(I2cAddr.create8bit(0x3a));
 
         line = hardwareMap.colorSensor.get("line");
         line.setI2cAddress(I2cAddr.create8bit(0x42));
@@ -268,10 +271,10 @@ public class OmnibotAutoTest extends OpMode {
         telemetry.addData("Target", target);
         telemetry.addData("Distance from target", trueHeading - target);
         //telemetry.addData("Color Buffer", colorRead.getReadBuffer());
-        telemetry.addData("Red", color.red());
-        telemetry.addData("Blue", color.blue());
-        telemetry.addData("Green", color.green());
-        telemetry.addData("Beacon", color.argb());
+        telemetry.addData("Red 1", color.red());
+        telemetry.addData("Blue 1", color.blue());
+        telemetry.addData("Red 2", color2.red());
+        telemetry.addData("Blue 2", color2.blue());
         telemetry.addData("Line Red", line.red());
         telemetry.addData("Line Blue", line.blue());
         telemetry.addData("Line Green", line.green());
