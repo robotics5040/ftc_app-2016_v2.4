@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.I2cDevice;
 import com.qualcomm.robotcore.hardware.I2cDeviceSynch;
 import com.qualcomm.robotcore.hardware.I2cDeviceSynchImpl;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.robot.Robot;
 import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -71,7 +72,8 @@ public class BlueAutoBeaconsFull4 extends OpMode {
     public enum RobotSteps {INIT_START, DELAY, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, INIT_MOVE_TO_BEACON, MOVE_TO_BEACON,
         INIT_ALIGN, ALIGN, INIT_MOVE_TO_PUSH_POS, MOVE_TO_PUSH_POS, INIT_REALIGN, REALIGN, INIT_SCAN, SCAN, INIT_PUSH,
         PUSH, CHECK_PUSH, REVERSE, REREALIGN, INIT_MOVE_TO_BEACON2, MOVE_TO_BEACON2, COMPLETE, RANGE_CHECK, PRESCAN,
-        SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_TWO, MOVE_TO_PARK, CHECK_WALL, BACK_UP, B2_LINEUP_CHECK, FINAL_ALIGN};
+        SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_TWO, MOVE_TO_PARK, CHECK_WALL, BACK_UP, B2_LINEUP_CHECK,
+        FINAL_ALIGN, FINAL_FORWARD};
     RobotSteps control = RobotSteps.INIT_START;
     OpenGLMatrix lastLocation = null;
     String loopNumber;
@@ -374,7 +376,7 @@ public class BlueAutoBeaconsFull4 extends OpMode {
                 sonarCache = sonarReader.read(0x04, 1);
                 allStop();
                 if (sideOfLine == 0) {
-                    if ((sonarCache[0] & 0xff) > 17)
+                    if ((sonarCache[0] & 0xff) > 20)
                         navigateBlind(270, .35, heading);
                     else {
                         if (line.alpha() > 20) {
@@ -386,21 +388,21 @@ public class BlueAutoBeaconsFull4 extends OpMode {
                         }
                     }
                 } else if (sideOfLine == 1) {
-                    if ((sonarCache[0] & 0xff) > 17)
+                    if ((sonarCache[0] & 0xff) > 20)
                         navigateBlind(225, .33, heading);
                     else
                         navigateBlind(180, .33, heading);
                 } else if (sideOfLine == -1) {
-                    if ((sonarCache[0] & 0xff) > 17)
+                    if ((sonarCache[0] & 0xff) > 20)
                         navigateBlind(315, .33, heading);
                     else
                         navigateBlind(0, .33, heading);
                 }
-                if (lineLeft.alpha() > 20) {
+                if (sideOfLine != -1 && lineLeft.alpha() > 20) {
                     sideOfLine = -1;
-                } else if (line.alpha() > 20) {
+                } else if (sideOfLine != 0 && line.alpha() > 20) {
                     sideOfLine = 0;
-                } else if (lineRight.alpha() > 20) {
+                } else if (sideOfLine != 1 && lineRight.alpha() > 20) {
                     sideOfLine = 1;
                 }
                 break;
@@ -408,7 +410,7 @@ public class BlueAutoBeaconsFull4 extends OpMode {
             case FINAL_ALIGN: {
                 allStop();
                 if (sideOfLine == 0) {
-                    control = RobotSteps.PRESCAN;
+                    control = RobotSteps.FINAL_FORWARD;
                 } else if (sideOfLine == -1) {
                     navigateBlind(0, .33, heading);
                 } else if (sideOfLine == 1) {
@@ -425,6 +427,15 @@ public class BlueAutoBeaconsFull4 extends OpMode {
                     sideOfLine = 1;
                 }
                 telemetry.addData("Guessing", guessing);
+                break;
+            }
+            case FINAL_FORWARD: {
+                sonarCache = sonarReader.read(0x04, 1);
+                allStop();
+                if ((sonarCache[0] & 0xFF) > 17)
+                    navigateBlind(270, .3, heading);
+                else
+                    control = RobotSteps.PRESCAN;
                 break;
             }
             /*case RANGE_CHECK: {

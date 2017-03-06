@@ -15,7 +15,7 @@ public class ServoInit extends OpMode {
         s1 = hardwareMap.servo.get("pusher");
         s2 = hardwareMap.servo.get("pusher2");
 
-        s1.setPosition(0);
+        s1.setPosition(1);
         s2.setPosition(0);
     }
 

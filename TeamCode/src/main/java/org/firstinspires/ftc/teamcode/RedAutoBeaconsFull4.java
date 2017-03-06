@@ -335,7 +335,7 @@ public class RedAutoBeaconsFull4 extends OpMode {
                     segmentTime = time;
                 } else {
                     if (sideOfLine == -1) {
-                        navigateBlind(180, .3, heading);
+                        navigateBlind(180, .33, heading);
                         if (posx - 20 > x) {
                             sideOfLine = 1;
                             segmentTime = time;
@@ -344,7 +344,7 @@ public class RedAutoBeaconsFull4 extends OpMode {
                             sideOfLine = 0;
                     }
                     if (sideOfLine == 1) {
-                        navigateBlind(0, .3, heading);
+                        navigateBlind(0, .33, heading);
                         if (posx + 20 < x) {
                             sideOfLine = -1;
                             segmentTime = time;
