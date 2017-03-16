@@ -50,7 +50,7 @@ public class RedPos2Shoot2Cap extends OpMode {
     public static final String TAG = "Vuforia Sample";
 
     public enum RobotSteps {INIT_START, DELAY, INIT_MOVE, MOVE_TO_SHOOT, INIT_SHOOT, SHOOT, RETURN, PARK, ALL_DONE,
-        SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_DOS,SPIN2, ALIGN, DELAY2, DELAY_FOR_SHOOT, STRAFE};
+        SWEEPER_MOVE_BACKWARD, SWEEPER_MOVE_FORWARD, SHOOT_DOS,SPIN2, ALIGN, DELAY2, DELAY_FOR_SHOOT, STRAFE, TURN};
     RobotSteps control = RobotSteps.INIT_START;
     OpenGLMatrix lastLocation = null;
     String loopNumber;
@@ -94,7 +94,7 @@ public class RedPos2Shoot2Cap extends OpMode {
                 break;
             }
             case DELAY: {//Initial delay
-                if (segmentTime/* + 15000*/ < time)
+                if (segmentTime + 15000 < time)
                     control = RobotSteps.INIT_MOVE;
                 telemetry.addData("Status", "Waiting to start...");
                 break;
@@ -107,7 +107,7 @@ public class RedPos2Shoot2Cap extends OpMode {
                 break;
             }
             case MOVE_TO_SHOOT: {//move into position to shoot (timed move)
-                if (navigateTime(180, .6, 1500, heading)) {
+                if (navigateTime(180, .65, 1500, heading)) {
                     control = RobotSteps.DELAY_FOR_SHOOT;
                     segmentTime = time;
                 }
@@ -185,14 +185,22 @@ public class RedPos2Shoot2Cap extends OpMode {
 
             case RETURN: {//move forward to knock off cap ball
                 if (navigateTime(180, .6, 1500, heading)) {
-                    control = RobotSteps.STRAFE;
+                    control = RobotSteps.TURN;
                     segmentTime = time;
                 }
                 telemetry.addData("Status", "Made it to the delay case");
                 break;
             }
+            case TURN: {
+                rotateDegrees = -45;
+                if (realign(heading)) {
+                    segmentTime = time;
+                    control = RobotSteps.STRAFE;
+                }
+                break;
+            }
             case STRAFE: {
-                if (navigateTime(270, .6, 500, heading))
+                if (navigateTime(270, .7, 750, heading))
                     control = RobotSteps.DELAY2;
                 break;
             }

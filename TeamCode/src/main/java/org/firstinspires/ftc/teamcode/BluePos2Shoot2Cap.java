@@ -153,7 +153,7 @@ public class BluePos2Shoot2Cap extends OpMode {
                 break;
             }
             case MOVE_TO_SHOOT: {//move into position to shoot (timed move)
-                if (navigateTime(180, .6, 1400, heading))
+                if (navigateTime(180, .65, 1400, heading))
                     control = RobotSteps.INIT_SHOOT;
                 telemetry.addData("Status", "Moving for 1 seconds...");
                 break;
@@ -210,7 +210,7 @@ public class BluePos2Shoot2Cap extends OpMode {
 
             }
             case RETURN: {//move forward to knock off cap ball
-                if (navigateTime(180, .6, 1340, heading)) {
+                if (navigateTime(180, .6, 1400, heading)) {
                     control = RobotSteps.SPIN2;
                     segmentTime = time;
                 }
@@ -226,9 +226,10 @@ public class BluePos2Shoot2Cap extends OpMode {
                 break;
             }*/
             case SPIN2: {
-                rotateDegrees = 90;
+                rotateDegrees = 45;
                 if (realign(heading)) {
                     control = RobotSteps.PARK;
+                    segmentTime = time;
                     allStop();
                 }
                 break;
@@ -242,13 +243,24 @@ public class BluePos2Shoot2Cap extends OpMode {
                 break;
             }
             case PARK: {//park
-                if (navigateTime(0, .5, 1250, heading))
+                if (navigateTime(90, .7, 750, heading))
                     control = RobotSteps.ALL_DONE;
                 break;
             }
 
             default: {//Hopefully this only runs when program ends
                 allStop();
+                int sr = sweeper.getCurrentPosition() % 1440;
+                if (sr < 0) {
+                    sr = 1440 - Math.abs(sr);
+                }
+                if (sr <= 50 || sr >= 1390) {
+                    sweeper.setPower(0);
+                } else if (sr <= 360) {
+                    sweeper.setPower(-.1);
+                } else if (sr > 360) {
+                    sweeper.setPower(.15);
+                }
                 telemetry.addData("Status", "Switch is in default. Waiting for autonomous to end...");
             }
         }

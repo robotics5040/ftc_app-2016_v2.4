@@ -150,7 +150,7 @@ public class BlueAutoCorner extends OpMode {
                 break;
             }
             case MOVE_TO_SHOOT: {//move into position to shoot (timed move)
-                if (navigateTime(180, .6, 1400, heading))
+                if (navigateTime(180, .65, 1400, heading))
                     control = RobotSteps.INIT_SHOOT;
                 telemetry.addData("Status", "Moving for 1 seconds...");
                 break;
@@ -241,6 +241,17 @@ public class BlueAutoCorner extends OpMode {
 
             default: {//Hopefully this only runs when program ends
                 allStop();
+                int sr = sweeper.getCurrentPosition() % 1440;
+                if (sr < 0) {
+                    sr = 1440 - Math.abs(sr);
+                }
+                if (sr <= 50 || sr >= 1390) {
+                    sweeper.setPower(0);
+                } else if (sr <= 360) {
+                    sweeper.setPower(-.1);
+                } else if (sr > 360) {
+                    sweeper.setPower(.15);
+                }
                 telemetry.addData("Status", "Switch is in default. Waiting for autonomous to end...");
             }
         }
