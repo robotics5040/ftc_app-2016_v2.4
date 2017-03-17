@@ -70,6 +70,12 @@ public class BluePos2Shoot2Cap extends OpMode {
         frontRight.setDirection(DcMotor.Direction.FORWARD);
         backRight.setDirection(DcMotor.Direction.FORWARD);
 
+        sweeper.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        sweeper.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         startTime = System.currentTimeMillis();
         time = startTime;
         segmentTime = startTime;

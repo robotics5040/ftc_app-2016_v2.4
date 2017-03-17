@@ -43,7 +43,7 @@ public class CompetitionOmnibot4 extends OpMode {
         sweeper.setDirection(DcMotor.Direction.FORWARD);
         shooter.setDirection(DcMotor.Direction.FORWARD);
 
-        sweeper.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //sweeper.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         sweeper.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -171,13 +171,13 @@ public class CompetitionOmnibot4 extends OpMode {
             int sr = sweeper.getCurrentPosition() % 720;
             if (sr < 0)
                 sr = 720 - Math.abs(sr);
-            if (sr <= 100 || sr >= 620) {
+            if (sr <= 100 || sr >= 720) {
                 sweeper.setPower(0);
                 sweepResetCheck = true;
             } else if (sr <= 360) {
-                sweeper.setPower(-.08);
+                sweeper.setPower(-.12);
             } else if (sr > 360) {
-                sweeper.setPower(.15);
+                sweeper.setPower(.12);
             }
         }
         else if (sweep == 0 && !manualRest)
