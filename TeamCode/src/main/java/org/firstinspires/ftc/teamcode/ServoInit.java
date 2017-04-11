@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 /**
  * Created by bense on 2/27/2017.
  */
-@Autonomous (name = "ServoInit", group = "Testing")
+@Autonomous (name = "Servo Init", group = "Testing")
 public class ServoInit extends OpMode {
     Servo s1, s2;
 
@@ -20,5 +20,7 @@ public class ServoInit extends OpMode {
     }
 
     public void loop() {
+        s1.setPosition(0);
+        s2.setPosition(1);
     }
 }

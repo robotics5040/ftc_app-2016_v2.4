@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DeviceInterfaceModule;
 import com.qualcomm.robotcore.hardware.I2cAddr;
@@ -21,8 +22,6 @@ public class SensorTest extends OpMode {
     I2cController c;
     I2cDevice sonar1;
     I2cDevice sonar2;
-    ModernRoboticsI2cRangeSensor sonar3;
-    ModernRoboticsI2cRangeSensor sonar4;
     I2cDeviceSynch sonar1Reader;
     I2cDeviceSynch sonar2Reader;
     byte[] sonar1Cache;

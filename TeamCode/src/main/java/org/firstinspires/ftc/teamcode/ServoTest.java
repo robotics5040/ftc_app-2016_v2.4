@@ -10,7 +10,6 @@ import com.qualcomm.robotcore.hardware.Servo;
  */
 
 @TeleOp(name = "ServoTest", group = "Testing")
-@Disabled
 public class ServoTest extends OpMode {
 
     Servo servo;

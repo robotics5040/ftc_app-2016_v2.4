@@ -202,11 +202,6 @@ public class OmnibotAutoTest extends OpMode {
 
     public void loop() {
         for (VuforiaTrackable trackable : allTrackables) {
-            /**
-             * getUpdatedRobotLocation() will return null if no new information is available since
-             * the last time that call was made, or if the trackable is not currently visible.
-             * getRobotLocation() will return null if the trackable is not currently visible.
-             */
             telemetry.addData(trackable.getName(), ((VuforiaTrackableDefaultListener) trackable.getListener()).isVisible() ? "Visible" : "Not Visible");    //
 
             OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener) trackable.getListener()).getUpdatedRobotLocation();
@@ -215,84 +210,34 @@ public class OmnibotAutoTest extends OpMode {
             }
         }
 
-        time = System.currentTimeMillis();
+        if (gamepad1.dpad_up) {
+            sonar2Cache = sonar2Reader.read(0x04, 1);
+            wallSonarCache = wallSonarReader.read(0x04, 1);
 
-        sonar2Cache = sonar2Reader.read(0x04, 1);
-        wallSonarCache = wallSonarReader.read(0x04, 1);
-
-        int heading = gyro.getHeading() - rotateDegrees;
-        if (heading + rotateDegrees > 270)
-            heading -= 360;
-
-        switch (control) {
-            case 0: {
-                if (scan(allTrackables.get(3)))
-                    control = 1;
-                break;
-            }
-            case 1: {
-                scan(allTrackables.get(3));
-                double targetx = posx - -510;
-                double targety = posy - 1200;
-                startx = posx;
-                starty = posy;
-
-                if (targetx < 0)
-                    targetDegrees = (int) ((180 / Math.PI) * (Math.atan(targety / targetx)));
-                else if (targetx > 0)
-                    targetDegrees = (int) (180 + ((180 / Math.PI) * (Math.atan(targety / targetx))));
-                else
-                    targetDegrees = 90;
-
-                break;
-            }
-            case 2: {
-
-                break;
-            }
-            case 3: {
-
-            }
-            case 4: {
-
-            }
-            default: {
-                allStop();
-            }
-
-
+            telemetry.addData("Sonar", sonar.cmUltrasonic());
+            telemetry.addData("Sonar 2", sonar2Cache[0] & 0xff);
+            telemetry.addData("Wall Sonar", wallSonarCache[0] & 0xff);
         }
+        else if (gamepad1.dpad_down) {
+            telemetry.addData("Line Alpha", line.alpha());
+            telemetry.addData("Line Left", lineLeft.alpha());
+            telemetry.addData("Line Right", lineRight.alpha());
+        }
+        else if (gamepad1.dpad_left) {
+            telemetry.addData("Red 2", color2.red());
+            telemetry.addData("Blue 2", color2.blue());
+            telemetry.addData("Red 1", color.red());
+            telemetry.addData("Blue 1", color.blue());
+        }
+        else if (gamepad1.dpad_right) {
+            int heading = gyro.getHeading() - rotateDegrees;
+            if (heading + rotateDegrees > 270)
+                heading -= 360;
 
-        telemetry.addData("Timer", time - startTime);
-        telemetry.addData("Function Timer", time - startTime2);
-        telemetry.addData("Control", control);
-        telemetry.addData("Gyro", heading);
-        telemetry.addData("Actual Rotation", trueHeading);
-        telemetry.addData("Target", target);
-        telemetry.addData("Distance from target", trueHeading - target);
-        //telemetry.addData("Color Buffer", colorRead.getReadBuffer());
-        telemetry.addData("Red 1", color.red());
-        telemetry.addData("Blue 1", color.blue());
-        telemetry.addData("Red 2", color2.red());
-        telemetry.addData("Blue 2", color2.blue());
-        telemetry.addData("Line Red", line.red());
-        telemetry.addData("Line Blue", line.blue());
-        telemetry.addData("Line Green", line.green());
-        telemetry.addData("Line Alpha", line.alpha());
-        //telemetry.addData("Line", line.argb());
-        telemetry.addData("Line Left", lineLeft.alpha());
-        telemetry.addData("Line Right", lineRight.alpha());
-        telemetry.addData("Shooter Degrees", shooter.getCurrentPosition());
-        telemetry.addData("Target Degrees", targetDegrees);
-        telemetry.addData("Sonar", sonar.cmUltrasonic());
-        telemetry.addData("Sonar 2", sonar2Cache[0] & 0xff);
-        telemetry.addData("Wall Sonar", wallSonarCache[0] & 0xff);
-        telemetry.addData("", "");
-        telemetry.addData("line mem", line.getI2cAddress().get8Bit());
-        telemetry.addData("line left mem", lineLeft.getI2cAddress().get8Bit());
-        telemetry.addData("line right mem", lineRight.getI2cAddress().get8Bit());
-        telemetry.addData("color mem", color.getI2cAddress().get7Bit());
-        telemetry.addData("sonar mem", sonar.getI2cAddress().get7Bit());
+            telemetry.addData("Gyro", heading);
+            telemetry.addData("Actual Rotation", trueHeading);
+            telemetry.addData("Target", target);
+        }
 
         if (lastLocation != null) {
             VectorF trans = lastLocation.getTranslation();

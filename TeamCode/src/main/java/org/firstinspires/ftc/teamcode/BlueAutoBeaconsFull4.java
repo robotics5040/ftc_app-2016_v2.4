@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * Created by bense on 12/6/2016.
  */
-@Autonomous (name = "Blue pos 1: Shoot 2/Press 2/Park NEW", group = "Blue Autonomous")
+@Autonomous (name = "Blue pos 1: Shoot 2/Press 2/Park", group = "Blue Autonomous")
 public class BlueAutoBeaconsFull4 extends OpMode {
     public final int VERSION = 21;
 
@@ -65,7 +65,7 @@ public class BlueAutoBeaconsFull4 extends OpMode {
     I2cDevice spareSonar;
     I2cDeviceSynch spareSonarReader;
     byte[] spareSonarCache;
-    Servo pusher;
+    Servo pusher, sp;
 
     public static final String TAG = "Vuforia Sample";
 
@@ -109,6 +109,8 @@ public class BlueAutoBeaconsFull4 extends OpMode {
 
         pusher = hardwareMap.servo.get("pusher2");
         pusher.setPosition(.25);
+        sp = hardwareMap.servo.get("pusher");
+        sp.setPosition(1);
         color.enableLed(false);
         line.enableLed(true);
         lineLeft.enableLed(true);
@@ -220,7 +222,7 @@ public class BlueAutoBeaconsFull4 extends OpMode {
             }
             case MOVE_TO_SHOOT: {
                 pusher.setPosition(.25);
-                if (navigateTime(180, .6, 1000, heading))
+                if (navigateTime(180, .6, 1150, heading))
                     control = RobotSteps.INIT_SHOOT;
                 telemetry.addData("Status", "Moving to shooting position...");
                 break;
@@ -287,14 +289,14 @@ public class BlueAutoBeaconsFull4 extends OpMode {
                 boolean isVisible = scan(allTrackables.get(target2));
                 double pow;
                 if (segmentTime + 1000 > time)
-                    pow = .7;
-                else
                     pow = .5;
+                else
+                    pow = .6;
 
                 if (isVisible && posy > beaconPos1[1]) {
                     navigateBlind(270, pow, heading);
                 } else {
-                    navigateBlind(240, pow, heading);
+                    navigateBlind(245, pow, heading);
                 }
                 if (((sonarCache[0] & 0xff) > 0 && (sonarCache[0] & 0xff) < 45) || line.alpha() > 20) {
                     segmentTime = time;
@@ -382,6 +384,7 @@ public class BlueAutoBeaconsFull4 extends OpMode {
             }
             case INIT_MOVE_TO_PUSH_POS: {
                 allStop();
+                pusher.setPosition(.5);
                 if (line.alpha() > 20)
                     sideOfLine = 0;
                 else if (lineLeft.alpha() > 20)
@@ -394,13 +397,15 @@ public class BlueAutoBeaconsFull4 extends OpMode {
             }
             case MOVE_TO_PUSH_POS: {
                 sonarCache = sonarReader.read(0x04, 1);
+                int currentValue = sonarCache[0] & 0xff;
                 allStop();
                 if (sideOfLine == 0) {
-                    if ((sonarCache[0] & 0xff) > 20)
+                    if (currentValue > 15)
                         navigateBlind(270, .35, heading);
                     else {
                         if (line.alpha() > 20) {
                             control = RobotSteps.PRESCAN;
+                            segmentTime = time;
                         } else {
                             sideOfLine = 1;
                             guessing = true;
@@ -408,12 +413,12 @@ public class BlueAutoBeaconsFull4 extends OpMode {
                         }
                     }
                 } else if (sideOfLine == 1) {
-                    if ((sonarCache[0] & 0xff) > 20)
+                    if (currentValue > 20)
                         navigateBlind(225, .33, heading);
                     else
                         navigateBlind(180, .33, heading);
                 } else if (sideOfLine == -1) {
-                    if ((sonarCache[0] & 0xff) > 20)
+                    if (currentValue > 20)
                         navigateBlind(315, .33, heading);
                     else
                         navigateBlind(0, .33, heading);
@@ -430,7 +435,8 @@ public class BlueAutoBeaconsFull4 extends OpMode {
             case FINAL_ALIGN: {
                 allStop();
                 if (sideOfLine == 0) {
-                    control = RobotSteps.FINAL_FORWARD;
+                    control = RobotSteps.PRESCAN;
+                    segmentTime = time;
                 } else if (sideOfLine == -1) {
                     navigateBlind(0, .33, heading);
                 } else if (sideOfLine == 1) {
@@ -454,108 +460,23 @@ public class BlueAutoBeaconsFull4 extends OpMode {
                 allStop();
                 if ((sonarCache[0] & 0xFF) > 13)
                     navigateBlind(270, .3, heading);
-                else
-                    control = RobotSteps.PRESCAN;
-                break;
-            }
-            /*case RANGE_CHECK: {
-                scan(allTrackables.get(target2));
-                if (sonar.cmUltrasonic() <= 15 && segmentTime + 500 > time) {
-                    navigateBlind(270, .3, heading);
-                } else {
-                    control = RobotSteps.INIT_REALIGN;
-                    allStop();
-                    segmentTime = time;
-                }
-                break;
-            }
-            case  INIT_REALIGN: {
-                boolean isVisible = scan(allTrackables.get(target2));
-                pusher.setPosition(.25);
-                if (segmentTime + 3000 < time) {
-                    target2 = 1;
-                    segmentTime = time;
-                }
-
-                int x = 0;
-                if (target2 == 3)
-                    x = beaconPos1[0];
-                if (target2 == 1)
-                    x = beaconPos2[0];
-                if (realign(heading)) {
-                    if (isVisible) {
-                        if (line.alpha() > 20)
-                            sideOfLine = 0;//on target
-                        else if (posx < x)
-                            sideOfLine = -1;//left of target
-                        else if (posx > x)
-                            sideOfLine = 1;//right of target
-                    }
-                    else
-                        sideOfLine = 1;
-                    control = RobotSteps.REALIGN;
-                    segmentTime = time;
-                }
-                telemetry.addData("Status", "Realigning...");
-                break;
-            }
-            case REALIGN: {
-                boolean isVisible = scan(allTrackables.get(target2));
-                if (sonar.cmUltrasonic() < 10) {
-                    allStop();
-                    control = RobotSteps.BACK_UP;
-                    break;
-                }
-                int x = 0;
-                if (target2 == 3)
-                    x = beaconPos1[0];
-                if (target2 == 1)
-                    x = beaconPos2[0];
-                if (sideOfLine == 0) {
+                else {
                     control = RobotSteps.PRESCAN;
                     segmentTime = time;
-                } /*else if (spareSonar.cmUltrasonic() < 45 || segmentTime + 1000 < time) {
-                    navigateBlind(0, .3, heading);
-                    if (spareSonar.cmUltrasonic() < 45)
-                        segmentTime = time;
-                } else {
-                    if (isVisible)
-                        allStop();
-                    if (sideOfLine == -1) {//left
-                        navigateBlind(180, .35, heading);
-                        if (posx - 20 > x)
-                            sideOfLine = 1;
-                        if (line.alpha() > 20)
-                            sideOfLine = 0;
-                    }
-                    if (sideOfLine == 1) {//right
-                        navigateBlind(0, .35, heading);
-                        if (posx + 20 < x)
-                            sideOfLine = -1;
-                        if (line.alpha() > 20)
-                            sideOfLine = 0;
-                    }
                 }
-                telemetry.addData("Status", "Finding line...");
                 break;
             }
-            case BACK_UP: {
-                allStop();
-                navigateBlind(270, .4, heading);
-                if (sonar.cmUltrasonic() > 13) {
-                    control = RobotSteps.REALIGN;
-                }
-                break;
-            }*/
             case PRESCAN: {
                 sonarCache = sonarReader.read(0x04, 1);
                 if ((sonarCache[0] & 0xff) > 16) {
                     navigateBlind(270, .5, heading);
                     allStop();
-                } else if ((sonarCache[0] & 0xff) < 15) {
+                    segmentTime = time;
+                } else if ((sonarCache[0] & 0xff) < 12) {
                     navigateBlind(90, .5, heading);
                     allStop();
-                } else {
+                    segmentTime = time;
+                } else if (segmentTime + 250 < time){
                     control = RobotSteps.INIT_SCAN;
                 }
             }
@@ -611,8 +532,10 @@ public class BlueAutoBeaconsFull4 extends OpMode {
                 break;
             }
             case PUSH: {
-                if (segmentTime + 750 < time)
+                if (segmentTime + 750 < time) {
                     control = RobotSteps.REVERSE;
+                    segmentTime = time;
+                }
                 if (beaconState == -1) {
                     frontLeft.setPower(-.25);
                     frontRight.setPower(-.25);
@@ -627,9 +550,7 @@ public class BlueAutoBeaconsFull4 extends OpMode {
                 break;
             }
             case REVERSE: {
-                sonarCache = sonarReader.read(0x04, 1);
-                navigateBlind(90, .5, heading);
-                if ((sonarCache[0] & 0xff) > 30 && (sonarCache[0] & 0xff) != 255) {
+                if (navigateTime(90, .5, 600, heading)) {
                     control = RobotSteps.REREALIGN;
                     if (target2 == 2) {
                         control = RobotSteps.MOVE_TO_PARK;
@@ -690,7 +611,7 @@ public class BlueAutoBeaconsFull4 extends OpMode {
                 break;
             }
             case MOVE_TO_PARK: {
-                if (navigateTime(45, .5, 2000, heading)) {
+                if (navigateTime(35, .5, 2000, heading)) {
                     allStop();
                     control = RobotSteps.COMPLETE;
                 }

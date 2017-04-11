@@ -32,6 +32,7 @@ import java.util.List;
  * Created by bense on 12/6/2016.
  */
 @Autonomous (name = "Red pos 1: Shoot 2/Press 2/Park Old", group = "Red Autonomous")
+@Disabled
 public class RedAutoBeaconsFull2 extends OpMode {
     //REMINDER: Reactivate park
 
