@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -31,6 +32,7 @@ import java.util.List;
  * Created by bense on 12/6/2016.
  */
 @Autonomous (name = "Blue pos 1: Shoot 2/Press 2/Park EX", group = "Blue Autonomous")
+@Disabled
 public class BlueAutoBeaconsFull5 extends OpMode {
     public final int VERSION = 21;
 
@@ -611,7 +613,7 @@ public class BlueAutoBeaconsFull5 extends OpMode {
                 break;
             }
             case MOVE_TO_PARK: {
-                if (navigateTime(35, .5, 2000, heading)) {
+                if (navigateTime(35, .5, 1750, heading)) {
                     allStop();
                     control = RobotSteps.COMPLETE;
                 }

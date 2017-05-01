@@ -44,6 +44,7 @@ public class OmnibotAutoTest extends OpMode {
     DcMotor backLeft;
     DcMotor backRight;
     DcMotor shooter;
+    DcMotor sweeper;
     GyroSensor gyro;
     float robotBearing;
     Long time, startTime, startTime2;
@@ -73,6 +74,7 @@ public class OmnibotAutoTest extends OpMode {
         backLeft = hardwareMap.dcMotor.get("backLeft");
         backRight = hardwareMap.dcMotor.get("backRight");
         shooter = hardwareMap.dcMotor.get("shooter");
+        sweeper = hardwareMap.dcMotor.get("sweeper");
         gyro = hardwareMap.gyroSensor.get("gyro");
         gyro.calibrate();
         color = hardwareMap.colorSensor.get("color");
@@ -237,6 +239,16 @@ public class OmnibotAutoTest extends OpMode {
             telemetry.addData("Gyro", heading);
             telemetry.addData("Actual Rotation", trueHeading);
             telemetry.addData("Target", target);
+        }
+        else if (gamepad1.a) {
+            telemetry.addData("Sweeper", sweeper.getCurrentPosition());
+            telemetry.addData("Shooter", shooter.getCurrentPosition());
+            if (gamepad1.b) {
+                sweeper.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                sweeper.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                shooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                shooter.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            }
         }
 
         if (lastLocation != null) {

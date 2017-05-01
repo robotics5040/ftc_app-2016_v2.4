@@ -216,7 +216,7 @@ public class RedAutoBeaconsFull4 extends OpMode {
             }
             case MOVE_TO_SHOOT: {
                 pusher.setPosition(.25);
-                if (navigateTime(180, .6, 1000, heading))
+                if (navigateTime(180, .6, 1150, heading))
                     control = RobotSteps.INIT_SHOOT;
                 telemetry.addData("Status", "Moving to shooting position...");
                 break;

@@ -34,7 +34,7 @@ import java.util.List;
  */
 @Autonomous (name = "Blue pos 1: Shoot 2/Press 2/Park", group = "Blue Autonomous")
 public class BlueAutoBeaconsFull4 extends OpMode {
-    public final int VERSION = 21;
+    public final int VERSION = 23;
 
     public final int NUM_BEACONS = 2;
     int target, startDegrees, targetDegrees, shooterStartPos, sideOfLine, beaconState, target2 = 0, pushCheck = 0;
@@ -47,9 +47,9 @@ public class BlueAutoBeaconsFull4 extends OpMode {
     DcMotor sweeper;
     GyroSensor gyro;
     float robotBearing;
-    boolean pushable = false, guessing = false, everyOther = false;
+    boolean pushable = false, guessing = false, everyOther = false, timeUp = false;
 
-    Long time, startTime, segmentTime;
+    Long time, startTime, segmentTime, extraTime;
     VuforiaLocalizer vuforia;
     List<VuforiaTrackable> allTrackables;
     double posx, posy, startx, starty, targetDistance;
@@ -280,29 +280,32 @@ public class BlueAutoBeaconsFull4 extends OpMode {
                 if (segmentTime < time) {
                     control = RobotSteps.MOVE_TO_BEACON;
                     segmentTime = time;
+                    extraTime = time + 1000;
                 }
                 telemetry.addData("Status", "Preparing to move to beacon...");
                 break;
             }
             case MOVE_TO_BEACON: {
-                sonarCache = sonarReader.read(0x04, 1);
                 boolean isVisible = scan(allTrackables.get(target2));
                 double pow;
-                if (segmentTime + 1000 > time)
+                if (extraTime > time) {
+                    pow = .7;
+                } else {
                     pow = .5;
-                else
-                    pow = .6;
+                    sonarCache = sonarReader.read(0x04, 1);
+                    if (((sonarCache[0] & 0xff) > 0 && (sonarCache[0] & 0xff) < 45) || line.alpha() > 20) {
+                        segmentTime = time;
+                        control = RobotSteps.CHECK_WALL;
+                        allStop();
+                    }
+                }
 
                 if (isVisible && posy > beaconPos1[1]) {
                     navigateBlind(270, pow, heading);
                 } else {
                     navigateBlind(245, pow, heading);
                 }
-                if (((sonarCache[0] & 0xff) > 0 && (sonarCache[0] & 0xff) < 45) || line.alpha() > 20) {
-                    segmentTime = time;
-                    control = RobotSteps.CHECK_WALL;
-                    allStop();
-                }
+                telemetry.addData("Motor Power", pow);
                 telemetry.addData("Status", "Moving to beacon...");
                 break;
             }
@@ -458,7 +461,7 @@ public class BlueAutoBeaconsFull4 extends OpMode {
             case FINAL_FORWARD: {
                 sonarCache = sonarReader.read(0x04, 1);
                 allStop();
-                if ((sonarCache[0] & 0xFF) > 13)
+                if ((sonarCache[0] & 0xFF) > 16)
                     navigateBlind(270, .3, heading);
                 else {
                     control = RobotSteps.PRESCAN;
@@ -550,7 +553,7 @@ public class BlueAutoBeaconsFull4 extends OpMode {
                 break;
             }
             case REVERSE: {
-                if (navigateTime(90, .5, 600, heading)) {
+                if (navigateTime(90, .5, 800, heading)) {
                     control = RobotSteps.REREALIGN;
                     if (target2 == 2) {
                         control = RobotSteps.MOVE_TO_PARK;
@@ -611,7 +614,7 @@ public class BlueAutoBeaconsFull4 extends OpMode {
                 break;
             }
             case MOVE_TO_PARK: {
-                if (navigateTime(35, .5, 2000, heading)) {
+                if (navigateTime(35, .7, 2000, heading)) {
                     allStop();
                     control = RobotSteps.COMPLETE;
                 }

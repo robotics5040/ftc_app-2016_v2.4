@@ -18,6 +18,7 @@ import java.util.Arrays;
  * Created by bense on 2/13/2017.
  */
 @Autonomous (name = "Sonar Test", group = "Testing")
+@Disabled
 public class SensorTest extends OpMode {
     I2cController c;
     I2cDevice sonar1;
